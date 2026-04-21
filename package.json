@@ -7,7 +7,11 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "prepare": "husky"
+    "test": "turbo run test",
+    "test:cov": "turbo run test:cov",
+    "test:debug": "turbo run test:debug",
+    "test:watch": "turbo run test:watch",
+    "test:e2e": "turbo run test:e2e"
   },
   "devDependencies": {
     "@caioms/biomejs-config": "latest",

@@ -16,6 +16,33 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "cache": true,
+      "inputs": ["**/*.spec.ts", "**/vitest.config.ts"]
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "cache": true,
+      "inputs": ["**/*.e2e-spec.ts", "**/vitest.config.e2e.ts"]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:e2e:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:cov": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": ["coverage/**"]
+    },
+    "test:debug": {
+      "cache": false,
+      "persistent": true
     }
   }
 }
