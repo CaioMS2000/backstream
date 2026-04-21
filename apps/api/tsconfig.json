@@ -5,14 +5,13 @@
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
-    "types": ["node"],
+    "types": ["vitest/globals", "node"],
     "jsx": "react-jsx",
     "allowJs": true,
 
     // Bundler mode
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
     "noEmit": true,
 
     // Best practices
@@ -23,6 +22,14 @@
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+
+    // Path
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@property-module/*": ["./src/modules/property-module/*"],
+      "[ROOT]/*": ["./*"]
+    }
   }
 }
