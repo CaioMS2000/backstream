@@ -1,32 +1,24 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import { Email } from '@/shared/domain'
 import { generateId } from '@/shared/infrastructure/id-generator'
-import { Role } from './role'
 
-export class Credential {
+export class PasswordCredential {
 	private constructor(
 		readonly id: UniqueId,
 		readonly userId: UniqueId,
-		readonly email: Email,
 		private passwordHash: string,
-		readonly roles: Role[],
 		private _revokedAt: Date | null,
 		readonly createdAt: Date
 	) {}
 
 	static async create(input: {
 		userId: UniqueId
-		email: Email
 		passwordHash: string
-		roles: Role[]
 		now: Date
-	}): Promise<Credential> {
-		return new Credential(
+	}): Promise<PasswordCredential> {
+		return new PasswordCredential(
 			await generateId(),
 			input.userId,
-			input.email,
 			input.passwordHash,
-			input.roles,
 			null,
 			input.now
 		)
