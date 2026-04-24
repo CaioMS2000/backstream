@@ -39,6 +39,7 @@ yarn-error.log*
 
 # IDE
 .vscode
+.zed
 
 # others
-.husky
+.husky/_
