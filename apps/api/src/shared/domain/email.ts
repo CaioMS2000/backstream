@@ -20,4 +20,8 @@ export class Email {
 
 		return success(new Email(email))
 	}
+
+	equals(other: Email): boolean {
+		return this.value === other.value
+	}
 }

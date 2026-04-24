@@ -1,10 +1,11 @@
-import { failure, Result, success } from '../../result'
-import { ValueObject } from '../../value-object'
-import { InvalidValueError } from '../@errors/domain-errors/invalid-value-error'
+import { failure, Result, success } from '@backstream/core/result'
 import { PhoneLengthRule } from './rules/phone-length-rule'
+import { InvalidValueError } from '@/@errors/invalid-value-error'
 
 //556293765723 -> 12 digitos(e 13 tambem porque em alguns estados os telefone ganharam um '9' a mais no começo)
-export class Phone extends ValueObject<string> {
+export class Phone {
+	protected constructor(public value: string) {}
+
 	static create(phone: string): Result<InvalidValueError, Phone> {
 		const phoneLengthRule = new PhoneLengthRule()
 		const cleaned = phone.replace(/\D/g, '')
@@ -14,5 +15,9 @@ export class Phone extends ValueObject<string> {
 		}
 
 		return success(new Phone(cleaned))
+	}
+
+	equals(other: Phone): boolean {
+		return this.value === other.value
 	}
 }

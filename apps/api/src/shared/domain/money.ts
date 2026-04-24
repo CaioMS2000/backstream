@@ -30,4 +30,11 @@ export class Money {
 	get currency(): Currency {
 		return this.value.currency
 	}
+
+	equals(other: Money): boolean {
+		return (
+			this.value.valueInCents === other.value.valueInCents &&
+			this.value.currency === other.value.currency
+		)
+	}
 }

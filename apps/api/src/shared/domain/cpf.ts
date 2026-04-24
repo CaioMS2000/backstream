@@ -20,6 +20,10 @@ export class CPF {
 		return success(new CPF(cleaned))
 	}
 
+	equals(other: CPF): boolean {
+		return this.value === other.value
+	}
+
 	private static isValidChecksum(cpf: string): boolean {
 		// Verifica CPFs inválidos conhecidos (todos dígitos iguais)
 		if (/^(\d)\1{10}$/.test(cpf)) {
