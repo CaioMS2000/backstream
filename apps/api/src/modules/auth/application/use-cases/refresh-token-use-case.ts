@@ -5,8 +5,7 @@ import type { JwtTokenGenerator } from '../jwt'
 import { InvalidRefreshTokenError } from '../@errors/invalid-refresh-token-error'
 import { TokenReplayDetectedError } from '../@errors/token-replay-detected-error'
 import { REFRESH_TOKEN_EXPIRY_SECONDS } from '../constants'
-import { UniqueId } from '@backstream/core/unique-id'
-import { credentialRepository } from '../repositories/credential-repository'
+import { UserRepository } from '../repositories/user-repository'
 import { RefreshToken } from '../../domain/refresh-token'
 import { now } from '@/shared/infrastructure/clock'
 
@@ -24,7 +23,7 @@ export type RefreshTokenUseCaseResponse = Result<
 
 type UseCaseProps = {
 	refreshTokenRepository: RefreshTokenRepository
-	credentialRepository: credentialRepository
+	userRepository: UserRepository
 	jwtService: JwtService
 	tokenGenerator: JwtTokenGenerator
 }
@@ -46,7 +45,6 @@ export class RefreshTokenUseCase {
 			return failure(InvalidRefreshTokenError)
 		}
 
-		// Atomic mark-as-used: returns false if already used (race condition or replay)
 		const marked = await this.props.refreshTokenRepository.markUsed(tokenHash)
 
 		if (!marked) {
@@ -54,29 +52,17 @@ export class RefreshTokenUseCase {
 			return failure(TokenReplayDetectedError)
 		}
 
-		let user: { id: UniqueId; email: string; roles: string[] } | null = null
-		const credential = await this.props.credentialRepository.findByUserId(
-			stored.userId
-		)
+		const user = await this.props.userRepository.findById(stored.userId)
 
-		if (credential) {
-			user = {
-				id: credential.userId,
-				email: credential.email.value,
-				roles: credential.roles,
-			}
-		}
-
-		if (!user) {
+		if (!user || user.isRevoked()) {
 			await this.props.refreshTokenRepository.revoke(tokenHash)
 			return failure(InvalidRefreshTokenError)
 		}
 
-		// Generate new token pair
 		const accessToken = await this.props.jwtService.signAccessToken({
 			sub: user.id,
-			email: user.email,
-			role: user.roles,
+			email: user.email.value,
+			roles: user.roles,
 		})
 
 		const newRefreshToken =
@@ -93,7 +79,6 @@ export class RefreshTokenUseCase {
 			)
 		)
 
-		// Revoke old token
 		await this.props.refreshTokenRepository.revoke(tokenHash)
 
 		return success({

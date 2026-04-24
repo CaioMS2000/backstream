@@ -1,136 +1,95 @@
+import { failure, Result, success } from '@backstream/core/result'
+import { AuthenticatedUser } from '../../domain/authenticated-user'
 import {
-	failure,
-	type IdGenerator,
-	type Result,
-	success,
-	type UniqueId,
-	UseCase,
-} from '@repo/core'
-import { EmailAlreadyRegisteredError } from '../../@errors'
-import type { AdminRepository } from '../../repositories/admin-repository'
-import type { InstructorRepository } from '../../repositories/instructor-repository'
-import type { StudentRepository } from '../../repositories/student-repository'
-import type { HashGenerator } from '../../cryptography/hash-generator'
-import { Admin } from '../../../models/admin'
-import { Instructor } from '../../../models/instructor'
-import { Student } from '../../../models/student'
-import type { HTTPUser } from '../../../models/http-user'
+	EmailAlreadyRegisteredError,
+	PhoneAlreadyRegisteredError,
+} from '../@errors'
+import { HashGenerator } from '../cryptography/hash-generator'
+import { UserRepository } from '../repositories/user-repository'
+import { PasswordCredentialRepository } from '../repositories/password-credential-repository'
+import { User } from '../../domain/user'
+import { PasswordCredential } from '../../domain/password-credential'
+import { Role } from '../../domain/role'
+import { now } from '@/shared/infrastructure/clock'
+import { Email, Phone } from '@/shared/domain'
+import { InvalidValueError } from '@/@errors/invalid-value-error'
 
 export type RegisterUseCaseRequest = {
 	name: string
 	email: string
 	password: string
 	phone: string
-	role: 'ADMIN' | 'INSTRUCTOR' | 'STUDENT'
+	role: Role
 }
 
 export type RegisterUseCaseResponse = Result<
-	EmailAlreadyRegisteredError,
+	EmailAlreadyRegisteredError | PhoneAlreadyRegisteredError | InvalidValueError,
 	{
-		user: HTTPUser
+		user: AuthenticatedUser
 	}
 >
 
 type UseCaseProps = {
-	adminRepository: AdminRepository
-	instructorRepository: InstructorRepository
-	studentRepository: StudentRepository
+	userRepository: UserRepository
+	passwordCredentialRepository: PasswordCredentialRepository
 	hashGenerator: HashGenerator
-	idGenerator: IdGenerator
 }
 
-type PrivateMethodsParams = Omit<
-	RegisterUseCaseRequest,
-	'role' | 'password'
-> & { passwordHash: string }
-
-export class RegisterUseCase extends UseCase<
-	RegisterUseCaseRequest,
-	RegisterUseCaseResponse,
-	UseCaseProps
-> {
-	constructor(protected override props: UseCaseProps) {
-		super()
-	}
+export class RegisterUseCase {
+	constructor(protected props: UseCaseProps) {}
 
 	async execute(
 		input: RegisterUseCaseRequest
 	): Promise<RegisterUseCaseResponse> {
-		const emails = []
-		let [admin, instructor, student] = await Promise.all([
-			this.props.adminRepository.findByEmail(input.email),
-			this.props.instructorRepository.findByEmail(input.email),
-			this.props.studentRepository.findByEmail(input.email),
-		])
+		const existing = await this.props.userRepository.findByEmail(input.email)
 
-		emails.push(admin?.email)
-		emails.push(instructor?.email)
-		emails.push(student?.email)
-
-		const emailExists = emails.includes(input.email)
-
-		if (emailExists) {
+		if (existing) {
 			return failure(EmailAlreadyRegisteredError)
 		}
 
-		let id: UniqueId
-		const passwordHash = await this.props.hashGenerator.hash(input.password)
+		const emailResult = Email.create(input.email)
 
-		switch (input.role) {
-			case 'ADMIN': {
-				admin = await this.registerAdmin({ ...input, passwordHash })
-				id = admin.id
-				break
-			}
-			case 'INSTRUCTOR': {
-				instructor = await this.registerInstructor({ ...input, passwordHash })
-				id = instructor.id
-				break
-			}
-			case 'STUDENT': {
-				student = await this.registerStudent({ ...input, passwordHash })
-				id = student.id
-				break
-			}
+		if (emailResult.isFailure()) {
+			return failure(emailResult.value)
 		}
 
+		const phoneResult = Phone.create(input.phone)
+
+		if (phoneResult.isFailure()) {
+			return failure(phoneResult.value)
+		}
+
+		const existingPhone = await this.props.userRepository.findByPhone(
+			phoneResult.value.value
+		)
+
+		if (existingPhone) {
+			return failure(PhoneAlreadyRegisteredError)
+		}
+
+		const user = await User.create({
+			email: emailResult.value,
+			name: input.name,
+			phone: phoneResult.value,
+			roles: [input.role],
+			now: now(),
+		})
+		await this.props.userRepository.save(user)
+
+		const passwordHash = await this.props.hashGenerator.hash(input.password)
+		const passwordCredential = await PasswordCredential.create({
+			userId: user.id,
+			passwordHash,
+			now: now(),
+		})
+		await this.props.passwordCredentialRepository.save(passwordCredential)
+
 		return success({
-			user: { id, name: input.name, email: input.email, role: input.role },
+			user: {
+				id: user.id,
+				email: user.email.value,
+				roles: user.roles,
+			},
 		})
-	}
-
-	private async registerAdmin(data: PrivateMethodsParams): Promise<Admin> {
-		const admin = await Admin.create({
-			input: data,
-			idGenerator: this.props.idGenerator,
-		})
-
-		await this.props.adminRepository.save(admin)
-
-		return admin
-	}
-
-	private async registerInstructor(
-		data: PrivateMethodsParams
-	): Promise<Instructor> {
-		const instructor = await Instructor.create({
-			input: data,
-			idGenerator: this.props.idGenerator,
-		})
-
-		await this.props.instructorRepository.save(instructor)
-
-		return instructor
-	}
-
-	private async registerStudent(data: PrivateMethodsParams): Promise<Student> {
-		const student = await Student.create({
-			input: data,
-			idGenerator: this.props.idGenerator,
-		})
-
-		await this.props.studentRepository.save(student)
-
-		return student
 	}
 }

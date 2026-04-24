@@ -1,4 +1,4 @@
-import { failure, Result, success } from '@backstream/core/result'
+import { Result, success } from '@backstream/core/result'
 import type { RefreshTokenRepository } from '../repositories/refresh-token-repository'
 import type { JwtTokenGenerator } from '../jwt'
 

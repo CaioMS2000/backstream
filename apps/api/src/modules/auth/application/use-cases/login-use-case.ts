@@ -4,7 +4,8 @@ import { InvalidCredentialsError } from '../@errors'
 import { HashVerifier } from '../cryptography/hash-verifier'
 import { JwtService, JwtTokenGenerator } from '../jwt'
 import { RefreshTokenRepository } from '../repositories/refresh-token-repository'
-import { credentialRepository } from '../repositories/credential-repository'
+import { UserRepository } from '../repositories/user-repository'
+import { PasswordCredentialRepository } from '../repositories/password-credential-repository'
 import { RefreshToken } from '../../domain/refresh-token'
 import { now } from '@/shared/infrastructure/clock'
 import { REFRESH_TOKEN_EXPIRY_SECONDS } from '../constants'
@@ -28,23 +29,29 @@ type UseCaseProps = {
 	jwtService: JwtService
 	tokenGenerator: JwtTokenGenerator
 	refreshTokenRepository: RefreshTokenRepository
-	credentialRepository: credentialRepository
+	userRepository: UserRepository
+	passwordCredentialRepository: PasswordCredentialRepository
 }
 
 export class LoginUseCase {
 	constructor(protected props: UseCaseProps) {}
 
 	async execute(input: LoginUseCaseRequest): Promise<LoginUseCaseResponse> {
-		const credential = await this.props.credentialRepository.findByEmail(
-			input.email
-		)
+		const user = await this.props.userRepository.findByEmail(input.email)
 
-		if (!credential) {
+		if (!user || user.isRevoked()) {
+			return failure(InvalidCredentialsError)
+		}
+
+		const passwordCredential =
+			await this.props.passwordCredentialRepository.findByUserId(user.id)
+
+		if (!passwordCredential || passwordCredential.isRevoked()) {
 			return failure(InvalidCredentialsError)
 		}
 
 		const passwordValid = await this.props.hashVerifier.verify(
-			credential.hash,
+			passwordCredential.hash,
 			input.password
 		)
 
@@ -53,16 +60,16 @@ export class LoginUseCase {
 		}
 
 		const accessToken = await this.props.jwtService.signAccessToken({
-			sub: credential.userId,
-			email: credential.email,
-			roles: credential.roles,
+			sub: user.id,
+			email: user.email.value,
+			roles: user.roles,
 		})
 		const refreshTokenValue =
 			await this.props.tokenGenerator.generateRefreshToken()
 		const refreshTokenHash =
 			await this.props.tokenGenerator.hashRefreshToken(refreshTokenValue)
 		const refreshToken = await RefreshToken.issue(
-			credential.userId,
+			user.id,
 			refreshTokenHash,
 			now(),
 			REFRESH_TOKEN_EXPIRY_SECONDS
@@ -74,9 +81,9 @@ export class LoginUseCase {
 			accessToken,
 			refreshToken: refreshTokenValue,
 			user: {
-				id: credential.id,
-				email: credential.email.value,
-				roles: credential.roles,
+				id: user.id,
+				email: user.email.value,
+				roles: user.roles,
 			},
 		})
 	}
