@@ -18,6 +18,10 @@ export const envSchema = z.object({
 	PORT: z.coerce.number().catch(8000),
 	AUTH_JWKS_URL: z.string(),
 
+	// Auth
+	JWT_PRIVATE_KEY: z.string(),
+	JWT_PUBLIC_KEY: z.string(),
+
 	// Database
 	DATABASE_URL: z.string(),
 })
