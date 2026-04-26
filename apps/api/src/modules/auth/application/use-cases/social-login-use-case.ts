@@ -1,16 +1,19 @@
+import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
+import { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
 import { failure, Result, success } from '@backstream/core/result'
-import { AuthenticatedUser } from '../../domain/authenticated-user'
-import { User } from '../../domain/user'
-import { RefreshToken } from '../../domain/refresh-token'
-import { Role } from '../../domain/role'
-import { JwtService, JwtTokenGenerator } from '../jwt'
-import { UserRepository } from '../repositories/user-repository'
-import { OAuthAccountRepository } from '../repositories/oauth-account-repository'
-import { RefreshTokenRepository } from '../repositories/refresh-token-repository'
-import { REFRESH_TOKEN_EXPIRY_SECONDS } from '../constants'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { Email } from '@/shared/domain'
 import { now } from '@/shared/infrastructure/clock'
+import { UserRegistered } from '../../contracts/events/user-registered'
+import { AuthenticatedUser } from '../../domain/authenticated-user'
+import { RefreshToken } from '../../domain/refresh-token'
+import { Role } from '../../domain/role'
+import { User } from '../../domain/user'
+import { REFRESH_TOKEN_EXPIRY_SECONDS } from '../constants'
+import { JwtService, JwtTokenGenerator } from '../jwt'
+import { OAuthAccountRepository } from '../repositories/oauth-account-repository'
+import { RefreshTokenRepository } from '../repositories/refresh-token-repository'
+import { UserRepository } from '../repositories/user-repository'
 
 export type SocialLoginUseCaseRequest = {
 	provider: string
@@ -36,6 +39,8 @@ type UseCaseProps = {
 	refreshTokenRepository: RefreshTokenRepository
 	jwtService: JwtService
 	tokenGenerator: JwtTokenGenerator
+	domainEvents: DomainEventDispatcher
+	integrationBus: IntegrationEventBus
 }
 
 export class SocialLoginUseCase {
@@ -91,6 +96,11 @@ export class SocialLoginUseCase {
 			provider: input.provider,
 			providerAccountId: input.providerAccountId,
 		})
+
+		await user.dispatchDomainEvents(this.props.domainEvents)
+		await this.props.integrationBus.publish(
+			new UserRegistered(user.id, user.email.value, now())
+		)
 
 		return this.issueTokens(user, true)
 	}

@@ -1,18 +1,21 @@
+import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
+import { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
 import { failure, Result, success } from '@backstream/core/result'
+import { InvalidValueError } from '@/@errors/invalid-value-error'
+import { Email, Phone } from '@/shared/domain'
+import { now } from '@/shared/infrastructure/clock'
+import { UserRegistered } from '../../contracts/events/user-registered'
 import { AuthenticatedUser } from '../../domain/authenticated-user'
+import { PasswordCredential } from '../../domain/password-credential'
+import { Role } from '../../domain/role'
+import { User } from '../../domain/user'
 import {
 	EmailAlreadyRegisteredError,
 	PhoneAlreadyRegisteredError,
 } from '../@errors'
 import { HashGenerator } from '../cryptography/hash-generator'
-import { UserRepository } from '../repositories/user-repository'
 import { PasswordCredentialRepository } from '../repositories/password-credential-repository'
-import { User } from '../../domain/user'
-import { PasswordCredential } from '../../domain/password-credential'
-import { Role } from '../../domain/role'
-import { now } from '@/shared/infrastructure/clock'
-import { Email, Phone } from '@/shared/domain'
-import { InvalidValueError } from '@/@errors/invalid-value-error'
+import { UserRepository } from '../repositories/user-repository'
 
 export type RegisterUseCaseRequest = {
 	name: string
@@ -33,6 +36,8 @@ type UseCaseProps = {
 	userRepository: UserRepository
 	passwordCredentialRepository: PasswordCredentialRepository
 	hashGenerator: HashGenerator
+	domainEvents: DomainEventDispatcher
+	integrationBus: IntegrationEventBus
 }
 
 export class RegisterUseCase {
@@ -83,6 +88,11 @@ export class RegisterUseCase {
 			now: now(),
 		})
 		await this.props.passwordCredentialRepository.save(passwordCredential)
+
+		await user.dispatchDomainEvents(this.props.domainEvents)
+		await this.props.integrationBus.publish(
+			new UserRegistered(user.id, user.email.value, now())
+		)
 
 		return success({
 			user: {

@@ -1,12 +1,17 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { JwtService } from '../jwt/jwt-service'
-import { JwtTokenGenerator } from '../jwt/jwt-token-generator'
-import { InMemoryUserRepository } from '../../test/in-memory-user-repository'
-import { InMemoryOAuthAccountRepository } from '../../test/in-memory-oauth-account-repository'
-import { InMemoryRefreshTokenRepository } from '../../test/in-memory-refresh-token-repository'
-import { User } from '../../domain/user'
-import { Email } from '@/shared/domain'
+import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
+import { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
+import type { JWTPayload } from 'jose'
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type Mock,
+	vi,
+} from 'vitest'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
+import { Email } from '@/shared/domain'
 import {
 	__resetClockForTests,
 	initializeClock,
@@ -15,8 +20,14 @@ import {
 	__resetIdGeneratorForTests,
 	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
+import { UserRegistered } from '../../contracts/events/user-registered'
+import { User } from '../../domain/user'
+import { InMemoryOAuthAccountRepository } from '../../test/in-memory-oauth-account-repository'
+import { InMemoryRefreshTokenRepository } from '../../test/in-memory-refresh-token-repository'
+import { InMemoryUserRepository } from '../../test/in-memory-user-repository'
+import { JwtService } from '../jwt/jwt-service'
+import { JwtTokenGenerator } from '../jwt/jwt-token-generator'
 import { SocialLoginUseCase } from './social-login-use-case'
-import type { JWTPayload } from 'jose'
 
 class FakeJwtService extends JwtService {
 	async sign(): Promise<string> {
@@ -49,6 +60,9 @@ describe('SocialLoginUseCase', () => {
 	let userRepo: InMemoryUserRepository
 	let oauthAccountRepo: InMemoryOAuthAccountRepository
 	let refreshTokenRepo: InMemoryRefreshTokenRepository
+	let domainEvents: DomainEventDispatcher
+	let integrationBus: IntegrationEventBus
+	let userRegisteredSubscriber: Mock<(event: UserRegistered) => Promise<void>>
 	let sut: SocialLoginUseCase
 
 	const baseInput = {
@@ -66,6 +80,10 @@ describe('SocialLoginUseCase', () => {
 		userRepo = new InMemoryUserRepository()
 		oauthAccountRepo = new InMemoryOAuthAccountRepository()
 		refreshTokenRepo = new InMemoryRefreshTokenRepository()
+		domainEvents = new DomainEventDispatcher()
+		integrationBus = new IntegrationEventBus()
+		userRegisteredSubscriber = vi.fn(async (_event: UserRegistered) => {})
+		integrationBus.subscribe(UserRegistered, userRegisteredSubscriber)
 
 		sut = new SocialLoginUseCase({
 			userRepository: userRepo,
@@ -73,6 +91,8 @@ describe('SocialLoginUseCase', () => {
 			refreshTokenRepository: refreshTokenRepo,
 			jwtService: new FakeJwtService(),
 			tokenGenerator: new FakeJwtTokenGenerator(),
+			domainEvents,
+			integrationBus,
 		})
 	})
 
@@ -165,6 +185,12 @@ describe('SocialLoginUseCase', () => {
 		expect(userRepo.items[0].roles).toEqual(['viewer'])
 		expect(oauthAccountRepo.items).toHaveLength(1)
 		expect(refreshTokenRepo.items).toHaveLength(1)
+
+		expect(userRegisteredSubscriber).toHaveBeenCalledTimes(1)
+		const event = userRegisteredSubscriber.mock.calls[0][0] as UserRegistered
+		expect(event).toBeInstanceOf(UserRegistered)
+		expect(event.userId).toBe(userRepo.items[0].id)
+		expect(event.email).toBe(baseInput.email)
 	})
 
 	it('deve criar novo usuário (streamer) quando não existe', async () => {
@@ -190,5 +216,21 @@ describe('SocialLoginUseCase', () => {
 		expect(userRepo.items).toHaveLength(0)
 		expect(oauthAccountRepo.items).toHaveLength(0)
 		expect(refreshTokenRepo.items).toHaveLength(0)
+	})
+
+	it('não deve publicar UserRegistered quando logando usuário existente', async () => {
+		const user = await seedUser({
+			email: baseInput.email,
+			roles: ['viewer'],
+		})
+		await oauthAccountRepo.save({
+			userId: user.id,
+			provider: baseInput.provider,
+			providerAccountId: baseInput.providerAccountId,
+		})
+
+		await sut.execute(baseInput)
+
+		expect(userRegisteredSubscriber).not.toHaveBeenCalled()
 	})
 })
