@@ -1,0 +1,67 @@
+import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
+import type { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
+import type { HashGenerator } from './application/cryptography/hash-generator'
+import type { JwtService, JwtTokenGenerator } from './application/jwt'
+import type { OAuthAccountRepository } from './application/repositories/oauth-account-repository'
+import type { PasswordCredentialRepository } from './application/repositories/password-credential-repository'
+import type { RefreshTokenRepository } from './application/repositories/refresh-token-repository'
+import type { UserRepository } from './application/repositories/user-repository'
+import { RegisterUseCase } from './application/use-cases/register-use-case'
+import { SocialLoginUseCase } from './application/use-cases/social-login-use-case'
+
+export type AuthModuleDependencies = {
+	userRepository: UserRepository
+	passwordCredentialRepository: PasswordCredentialRepository
+	oauthAccountRepository: OAuthAccountRepository
+	refreshTokenRepository: RefreshTokenRepository
+	hashGenerator: HashGenerator
+	jwtService: JwtService
+	tokenGenerator: JwtTokenGenerator
+	integrationBus: IntegrationEventBus
+}
+
+export type AuthModule = {
+	domainEvents: DomainEventDispatcher
+	useCases: {
+		register: RegisterUseCase
+		socialLogin: SocialLoginUseCase
+	}
+}
+
+function registerDomainHandlers(
+	_domainEvents: DomainEventDispatcher,
+	_deps: AuthModuleDependencies
+): void {
+	// Intencionalmente vazio até termos handlers internos do módulo auth.
+}
+
+export function buildAuthModule(deps: AuthModuleDependencies): AuthModule {
+	const domainEvents = new DomainEventDispatcher()
+	registerDomainHandlers(domainEvents, deps)
+
+	const register = new RegisterUseCase({
+		userRepository: deps.userRepository,
+		passwordCredentialRepository: deps.passwordCredentialRepository,
+		hashGenerator: deps.hashGenerator,
+		domainEvents,
+		integrationBus: deps.integrationBus,
+	})
+
+	const socialLogin = new SocialLoginUseCase({
+		userRepository: deps.userRepository,
+		oauthAccountRepository: deps.oauthAccountRepository,
+		refreshTokenRepository: deps.refreshTokenRepository,
+		jwtService: deps.jwtService,
+		tokenGenerator: deps.tokenGenerator,
+		domainEvents,
+		integrationBus: deps.integrationBus,
+	})
+
+	return {
+		domainEvents,
+		useCases: {
+			register,
+			socialLogin,
+		},
+	}
+}
