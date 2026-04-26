@@ -1,19 +1,23 @@
+import { AggregateRoot } from '@backstream/core/aggregate-root'
 import { UniqueId } from '@backstream/core/unique-id'
 import { Email } from '@/shared/domain/email'
 import { Phone } from '@/shared/domain/phone'
 import { generateId } from '@/shared/infrastructure/id-generator'
+import { UserCreated } from './events/user-created'
 import { Role } from './role'
 
-export class User {
+export class User extends AggregateRoot {
 	private constructor(
-		readonly id: UniqueId,
+		id: UniqueId,
 		readonly email: Email,
 		readonly name: string,
 		readonly phone: Phone | null,
 		readonly roles: Role[],
 		private _revokedAt: Date | null,
 		readonly createdAt: Date
-	) {}
+	) {
+		super(id)
+	}
 
 	static async create(input: {
 		email: Email
@@ -22,7 +26,7 @@ export class User {
 		roles: Role[]
 		now: Date
 	}): Promise<User> {
-		return new User(
+		const user = new User(
 			await generateId(),
 			input.email,
 			input.name,
@@ -31,6 +35,8 @@ export class User {
 			null,
 			input.now
 		)
+		user.addEvent(new UserCreated(user.id, input.email.value, input.now))
+		return user
 	}
 
 	isRevoked(): boolean {
