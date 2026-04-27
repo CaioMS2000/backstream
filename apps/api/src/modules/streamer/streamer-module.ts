@@ -2,7 +2,10 @@ import { DomainEventDispatcher } from '@backstream/core/events/domain-event-disp
 import type { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
 import type { UserSummaryQuery } from '../auth/contracts/queries/user-summary-query'
 import type { StreamerRepository } from './application/repositories/streamer-repository'
+import { ChangeStreamerSlugUseCase } from './application/use-cases/change-streamer-slug-use-case'
 import { OnboardStreamerUseCase } from './application/use-cases/onboard-streamer-use-case'
+import { RenameStreamerUseCase } from './application/use-cases/rename-streamer-use-case'
+import { UpdateStreamerPixKeyUseCase } from './application/use-cases/update-streamer-pix-key-use-case'
 
 export type StreamerModuleDependencies = {
 	streamerRepository: StreamerRepository
@@ -14,6 +17,9 @@ export type StreamerModule = {
 	domainEvents: DomainEventDispatcher
 	useCases: {
 		onboardStreamer: OnboardStreamerUseCase
+		renameStreamer: RenameStreamerUseCase
+		changeStreamerSlug: ChangeStreamerSlugUseCase
+		updateStreamerPixKey: UpdateStreamerPixKeyUseCase
 	}
 }
 
@@ -49,10 +55,28 @@ export function buildStreamerModule(
 		integrationBus: deps.integrationBus,
 	})
 
+	const renameStreamer = new RenameStreamerUseCase({
+		streamerRepository: deps.streamerRepository,
+		domainEvents,
+	})
+
+	const changeStreamerSlug = new ChangeStreamerSlugUseCase({
+		streamerRepository: deps.streamerRepository,
+		domainEvents,
+	})
+
+	const updateStreamerPixKey = new UpdateStreamerPixKeyUseCase({
+		streamerRepository: deps.streamerRepository,
+		domainEvents,
+	})
+
 	return {
 		domainEvents,
 		useCases: {
 			onboardStreamer,
+			renameStreamer,
+			changeStreamerSlug,
+			updateStreamerPixKey,
 		},
 	}
 }
