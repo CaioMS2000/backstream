@@ -4,7 +4,7 @@ Este documento define o que entra e o que fica fora da primeira versão da plata
 
 ## Hipótese central
 
-Streamers do nicho de react pago vão pagar comissão para usar uma ferramenta que centraliza gestão de doações por mídia, e seus viewers vão doar através dela.
+Streamers do nicho de react pago vão pagar comissão para usar uma ferramenta que centraliza gestão de doações por mídia, e seus doadores vão doar através dela.
 
 ## Critérios de corte
 
@@ -83,7 +83,7 @@ Tudo abaixo fica para versões futuras. Não vai para a v1.
 ### Catálogo e descoberta
 
 - Integração com TMDb, Jikan/MyAnimeList, IGDB para puxar capa, sinopse e duração automaticamente.
-- Wishlist e sugestões de viewer com upvote.
+- Wishlist e sugestões de doador com upvote.
 - Sistema de patrocínio granular (por episódio, temporada ou arco).
 
 ### Agenda e organização
