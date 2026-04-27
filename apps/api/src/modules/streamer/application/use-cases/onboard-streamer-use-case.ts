@@ -18,7 +18,7 @@ export type OnboardStreamerUseCaseRequest = {
 	userId: UniqueId
 	displayName: string
 	slug: string
-	pixKey: string
+	pixKey?: string
 }
 
 export type OnboardStreamerUseCaseResponse = Result<
@@ -76,7 +76,6 @@ export class OnboardStreamerUseCase {
 			displayName: input.displayName,
 			slug: input.slug,
 			pixKey: input.pixKey,
-			now: now(),
 		})
 
 		await this.props.streamerRepository.save(streamer)
