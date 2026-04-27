@@ -24,8 +24,28 @@ export class PasswordCredential {
 		)
 	}
 
+	static __create(input: {
+		id: UniqueId
+		revokedAt: Date | null
+		createdAt: Date
+		userId: UniqueId
+		passwordHash: string
+	}): PasswordCredential {
+		return new PasswordCredential(
+			input.id,
+			input.userId,
+			input.passwordHash,
+			input.revokedAt,
+			input.createdAt
+		)
+	}
+
 	get hash(): string {
 		return this.passwordHash
+	}
+
+	get revokedAt(): Date | null {
+		return this._revokedAt
 	}
 
 	isRevoked(): boolean {

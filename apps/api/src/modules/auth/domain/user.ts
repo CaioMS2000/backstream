@@ -19,6 +19,10 @@ export class User extends AggregateRoot {
 		super(id)
 	}
 
+	get revokedAt(): Date | null {
+		return this._revokedAt
+	}
+
 	static async create(input: {
 		email: Email
 		name: string
@@ -36,6 +40,28 @@ export class User extends AggregateRoot {
 			input.now
 		)
 		user.addEvent(new UserCreated(user.id, input.email.value, input.now))
+		return user
+	}
+
+	static __create(input: {
+		email: Email
+		name: string
+		phone: Phone | null
+		roles: Role[]
+		id: UniqueId
+		revokedAt: Date | null
+		createdAt: Date
+	}): User {
+		const user = new User(
+			input.id,
+			input.email,
+			input.name,
+			input.phone,
+			input.roles,
+			input.revokedAt,
+			input.createdAt
+		)
+
 		return user
 	}
 
