@@ -20,7 +20,7 @@ export type SocialLoginUseCaseRequest = {
 	providerAccountId: string
 	email: string
 	name: string
-	role: Extract<Role, 'streamer' | 'viewer'>
+	role: Extract<Role, 'streamer' | 'donor'>
 }
 
 export type SocialLoginUseCaseResponse = Result<

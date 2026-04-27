@@ -70,7 +70,7 @@ describe('SocialLoginUseCase', () => {
 		providerAccountId: 'google-123',
 		email: 'user@example.com',
 		name: 'Test User',
-		role: 'viewer' as const,
+		role: 'donor' as const,
 	}
 
 	beforeEach(() => {
@@ -104,7 +104,7 @@ describe('SocialLoginUseCase', () => {
 	async function seedUser(opts: {
 		email: string
 		name?: string
-		roles: ('streamer' | 'viewer')[]
+		roles: ('streamer' | 'donor')[]
 	}): Promise<User> {
 		const emailResult = Email.create(opts.email)
 		if (emailResult.isFailure()) {
@@ -124,7 +124,7 @@ describe('SocialLoginUseCase', () => {
 	it('deve logar usuário existente quando o provider já está vinculado', async () => {
 		const user = await seedUser({
 			email: baseInput.email,
-			roles: ['viewer'],
+			roles: ['donor'],
 		})
 		await oauthAccountRepo.save({
 			userId: user.id,
@@ -171,18 +171,18 @@ describe('SocialLoginUseCase', () => {
 		expect(userRepo.items).toHaveLength(1)
 	})
 
-	it('deve criar novo usuário (viewer) quando não existe', async () => {
-		const result = await sut.execute({ ...baseInput, role: 'viewer' })
+	it('deve criar novo usuário (donor) quando não existe', async () => {
+		const result = await sut.execute({ ...baseInput, role: 'donor' })
 
 		expect(result.isSuccess()).toBe(true)
 		if (result.isSuccess()) {
 			expect(result.value.isNewUser).toBe(true)
-			expect(result.value.user.roles).toEqual(['viewer'])
+			expect(result.value.user.roles).toEqual(['donor'])
 			expect(result.value.user.email).toBe(baseInput.email)
 		}
 
 		expect(userRepo.items).toHaveLength(1)
-		expect(userRepo.items[0].roles).toEqual(['viewer'])
+		expect(userRepo.items[0].roles).toEqual(['donor'])
 		expect(oauthAccountRepo.items).toHaveLength(1)
 		expect(refreshTokenRepo.items).toHaveLength(1)
 
@@ -221,7 +221,7 @@ describe('SocialLoginUseCase', () => {
 	it('não deve publicar UserRegistered quando logando usuário existente', async () => {
 		const user = await seedUser({
 			email: baseInput.email,
-			roles: ['viewer'],
+			roles: ['donor'],
 		})
 		await oauthAccountRepo.save({
 			userId: user.id,

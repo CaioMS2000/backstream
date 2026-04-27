@@ -48,7 +48,7 @@ describe('RegisterUseCase', () => {
 		email: 'caio@example.com',
 		password: 'secret-password',
 		phone: '5511987654321',
-		role: 'viewer' as const,
+		role: 'donor' as const,
 	}
 
 	beforeEach(() => {
