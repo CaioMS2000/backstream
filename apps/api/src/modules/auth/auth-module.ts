@@ -1,13 +1,19 @@
 import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
 import type { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
 import type { HashGenerator } from './application/cryptography/hash-generator'
+import type { HashVerifier } from './application/cryptography/hash-verifier'
 import type { JwtService, JwtTokenGenerator } from './application/jwt'
 import type { OAuthAccountRepository } from './application/repositories/oauth-account-repository'
 import type { PasswordCredentialRepository } from './application/repositories/password-credential-repository'
 import type { RefreshTokenRepository } from './application/repositories/refresh-token-repository'
 import type { UserRepository } from './application/repositories/user-repository'
+import { LoginUseCase } from './application/use-cases/login-use-case'
+import { LogoutUseCase } from './application/use-cases/logout-use-case'
+import { RefreshTokenUseCase } from './application/use-cases/refresh-token-use-case'
 import { RegisterUseCase } from './application/use-cases/register-use-case'
 import { SocialLoginUseCase } from './application/use-cases/social-login-use-case'
+import type { UserSummaryQuery } from './contracts/queries/user-summary-query'
+import { UserSummaryQueryFromRepo } from './infrastructure/queries/user-summary-query-from-repo'
 
 export type AuthModuleDependencies = {
 	userRepository: UserRepository
@@ -15,6 +21,7 @@ export type AuthModuleDependencies = {
 	oauthAccountRepository: OAuthAccountRepository
 	refreshTokenRepository: RefreshTokenRepository
 	hashGenerator: HashGenerator
+	hashVerifier: HashVerifier
 	jwtService: JwtService
 	tokenGenerator: JwtTokenGenerator
 	integrationBus: IntegrationEventBus
@@ -22,9 +29,15 @@ export type AuthModuleDependencies = {
 
 export type AuthModule = {
 	domainEvents: DomainEventDispatcher
+	queries: {
+		userSummary: UserSummaryQuery
+	}
 	useCases: {
 		register: RegisterUseCase
 		socialLogin: SocialLoginUseCase
+		login: LoginUseCase
+		logout: LogoutUseCase
+		refreshToken: RefreshTokenUseCase
 	}
 }
 
@@ -38,6 +51,8 @@ function registerDomainHandlers(
 export function buildAuthModule(deps: AuthModuleDependencies): AuthModule {
 	const domainEvents = new DomainEventDispatcher()
 	registerDomainHandlers(domainEvents, deps)
+
+	const userSummaryQuery = new UserSummaryQueryFromRepo(deps.userRepository)
 
 	const register = new RegisterUseCase({
 		userRepository: deps.userRepository,
@@ -57,11 +72,38 @@ export function buildAuthModule(deps: AuthModuleDependencies): AuthModule {
 		integrationBus: deps.integrationBus,
 	})
 
+	const login = new LoginUseCase({
+		userRepository: deps.userRepository,
+		passwordCredentialRepository: deps.passwordCredentialRepository,
+		refreshTokenRepository: deps.refreshTokenRepository,
+		hashVerifier: deps.hashVerifier,
+		jwtService: deps.jwtService,
+		tokenGenerator: deps.tokenGenerator,
+	})
+
+	const logout = new LogoutUseCase({
+		refreshTokenRepository: deps.refreshTokenRepository,
+		tokenGenerator: deps.tokenGenerator,
+	})
+
+	const refreshToken = new RefreshTokenUseCase({
+		userRepository: deps.userRepository,
+		refreshTokenRepository: deps.refreshTokenRepository,
+		jwtService: deps.jwtService,
+		tokenGenerator: deps.tokenGenerator,
+	})
+
 	return {
 		domainEvents,
+		queries: {
+			userSummary: userSummaryQuery,
+		},
 		useCases: {
 			register,
 			socialLogin,
+			login,
+			logout,
+			refreshToken,
 		},
 	}
 }
