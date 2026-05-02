@@ -1,9 +1,10 @@
 import { UniqueId } from '@backstream/core/unique-id'
+import { drizzle } from '@/lib/drizzle'
+import { UserRepository } from '@/modules/auth/application/repositories/user-repository'
 import { User } from '@/modules/auth/domain/user'
 import { UserMapper } from '../mappers/user-mapper'
-import { UserRepository } from '@/modules/auth/application/repositories/user-repository'
-import { drizzle } from '@/lib/drizzle'
 import { user } from '../schemas'
+
 UserMapper
 export abstract class DrizzleUserRepository extends UserRepository {
 	async save(userData: User): Promise<void> {
@@ -11,7 +12,33 @@ export abstract class DrizzleUserRepository extends UserRepository {
 		await drizzle.insert(user).values(newRecord)
 	}
 
-	abstract findById(id: UniqueId): Promise<User | null>
-	abstract findByEmail(email: string): Promise<User | null>
-	abstract findByPhone(phone: string): Promise<User | null>
+	async findById(id: UniqueId): Promise<User | null> {
+		const record = await drizzle.query.user.findFirst({
+			where: (table, { eq }) => eq(table.id, id),
+		})
+
+		if (!record) return null
+
+		return UserMapper.toDomain(record)
+	}
+
+	async findByEmail(email: string): Promise<User | null> {
+		const record = await drizzle.query.user.findFirst({
+			where: (table, { eq }) => eq(table.email, email),
+		})
+
+		if (!record) return null
+
+		return UserMapper.toDomain(record)
+	}
+
+	async findByPhone(phone: string): Promise<User | null> {
+		const record = await drizzle.query.user.findFirst({
+			where: (table, { eq }) => eq(table.phone, phone),
+		})
+
+		if (!record) return null
+
+		return UserMapper.toDomain(record)
+	}
 }
