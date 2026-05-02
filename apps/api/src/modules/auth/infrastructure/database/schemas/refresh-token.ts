@@ -4,8 +4,9 @@ export const refreshToken = pgTable('refresh_token', {
 	id: text('id').notNull().primaryKey(),
 	userId: text('user_id').notNull(),
 	value: text('value').notNull(),
-	expiresAt: timestamp('expires_at'),
+	expiresAt: timestamp('expires_at').notNull(),
 	revokedAt: timestamp('revoked_at'),
+	usedAt: timestamp('used_at'),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 

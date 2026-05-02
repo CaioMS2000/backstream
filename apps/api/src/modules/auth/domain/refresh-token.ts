@@ -1,5 +1,5 @@
-import { generateId } from '@/shared/infrastructure/id-generator'
 import { UniqueId } from '@backstream/core/unique-id'
+import { generateId } from '@/shared/infrastructure/id-generator'
 
 export class RefreshToken {
 	private constructor(
@@ -10,6 +10,10 @@ export class RefreshToken {
 		private _revokedAt: Date | null,
 		readonly createdAt: Date
 	) {}
+
+	get revokedAt() {
+		return this._revokedAt
+	}
 
 	static async issue(
 		userId: UniqueId,
@@ -25,6 +29,18 @@ export class RefreshToken {
 			null,
 			now
 		)
+	}
+
+	static __create(props: {
+		id: UniqueId
+		userId: UniqueId
+		value: string
+		expiresAt: Date
+		revokedAt: Date | null
+		createdAt: Date
+	}): RefreshToken {
+		const { id, userId, value, expiresAt, revokedAt, createdAt } = props
+		return new RefreshToken(id, userId, value, expiresAt, revokedAt, createdAt)
 	}
 
 	isValid(now: Date): boolean {
