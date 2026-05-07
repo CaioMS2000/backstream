@@ -1,0 +1,20 @@
+{
+  "name": "@backstream/shared",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./*": {
+      "types": "./src/*.ts",
+      "import": "./src/*.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "zod": "^4.4.2"
+  }
+}
