@@ -8,6 +8,7 @@ import {
 } from 'jose'
 import { JwtService } from '../../application/jwt/jwt-service'
 import { JwtTokenGenerator } from '../../application/jwt/jwt-token-generator'
+import type { Role } from '../../domain/role'
 import { getPrivateKey, getPublicKey } from './keys'
 
 const ALG = 'RS256' satisfies JWSHeaderParameters['alg']
@@ -17,9 +18,8 @@ const ACCESS_TOKEN_EXPIRY = '10m' satisfies Parameters<
 
 type AccessTokenPayload = {
 	sub: string
-	name: string
 	email: string
-	role: string
+	roles: Role[]
 }
 
 export class TokenService implements JwtService, JwtTokenGenerator {
@@ -45,9 +45,8 @@ export class TokenService implements JwtService, JwtTokenGenerator {
 		const privateKey = await getPrivateKey()
 
 		return new SignJWT({
-			name: payload.name,
 			email: payload.email,
-			role: payload.role,
+			roles: payload.roles,
 		})
 			.setProtectedHeader({ alg: ALG, kid: 'default' })
 			.setSubject(payload.sub)
