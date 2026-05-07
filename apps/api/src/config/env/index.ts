@@ -15,7 +15,7 @@ export const envSchema = z.object({
 		.default('development'),
 
 	// HTTP Server
-	PORT: z.coerce.number().catch(8000),
+	PORT: z.coerce.number().default(3333).catch(3333),
 	AUTH_JWKS_URL: z.string(),
 
 	// Auth
