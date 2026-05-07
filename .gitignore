@@ -44,3 +44,4 @@ yarn-error.log*
 # others
 .husky/_
 temp
+logs/
