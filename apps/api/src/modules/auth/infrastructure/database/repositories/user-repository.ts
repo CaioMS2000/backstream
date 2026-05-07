@@ -5,8 +5,7 @@ import { User } from '@/modules/auth/domain/user'
 import { UserMapper } from '../mappers/user-mapper'
 import { user } from '../schemas'
 
-UserMapper
-export abstract class DrizzleUserRepository extends UserRepository {
+export class DrizzleUserRepository extends UserRepository {
 	async save(userData: User): Promise<void> {
 		const newRecord = UserMapper.toPersistence(userData)
 		await drizzle.insert(user).values(newRecord)

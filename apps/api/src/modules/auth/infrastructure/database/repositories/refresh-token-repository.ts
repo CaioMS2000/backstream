@@ -1,11 +1,12 @@
 import { UniqueId } from '@backstream/core/unique-id'
 import { and, eq, isNull } from 'drizzle-orm'
 import { drizzle } from '@/lib/drizzle'
+import { RefreshTokenRepository } from '@/modules/auth/application/repositories/refresh-token-repository'
 import { RefreshToken } from '@/modules/auth/domain/refresh-token'
 import { RefreshTokenMapper } from '../mappers/refresh-tokne-mapper'
 import { refreshToken } from '../schemas'
 
-export abstract class RefreshTokenRepository {
+export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
 	async save(token: RefreshToken): Promise<void> {
 		const newRecord = RefreshTokenMapper.toPersistence(token)
 		await drizzle.insert(refreshToken).values(newRecord)

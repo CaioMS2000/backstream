@@ -1,11 +1,11 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import { PasswordCredential } from '@/modules/auth/domain/password-credential'
-import { PasswordCredentialRepository } from '@/modules/auth/application/repositories/password-credential-repository'
 import { drizzle } from '@/lib/drizzle'
-import { passwordCredential } from '../schemas'
+import { PasswordCredentialRepository } from '@/modules/auth/application/repositories/password-credential-repository'
+import { PasswordCredential } from '@/modules/auth/domain/password-credential'
 import { PasswordCredentialMapper } from '../mappers/password-credential-mapper'
+import { passwordCredential } from '../schemas'
 
-export abstract class DrizzlePasswordCredentialRepository extends PasswordCredentialRepository {
+export class DrizzlePasswordCredentialRepository extends PasswordCredentialRepository {
 	async save(credential: PasswordCredential): Promise<void> {
 		await drizzle.insert(passwordCredential).values({
 			id: credential.id,
