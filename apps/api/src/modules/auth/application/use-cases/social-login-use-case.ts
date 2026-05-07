@@ -4,11 +4,11 @@ import { failure, Result, success } from '@backstream/core/result'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { Email } from '@/shared/domain'
 import { now } from '@/shared/infrastructure/clock'
-import { UserRegistered } from '../../contracts/events/user-registered'
-import { AuthenticatedUser } from '../../domain/authenticated-user'
 import { RefreshToken } from '../../domain/refresh-token'
 import { Role } from '../../domain/role'
 import { User } from '../../domain/user'
+import { UserRegistered } from '../../public/events/user-registered'
+import { AuthenticatedUser } from '../../public/types/authenticated-user'
 import { REFRESH_TOKEN_EXPIRY_SECONDS } from '../constants'
 import { JwtService, JwtTokenGenerator } from '../jwt'
 import { OAuthAccountRepository } from '../repositories/oauth-account-repository'
@@ -132,7 +132,7 @@ export class SocialLoginUseCase {
 			accessToken,
 			refreshToken: refreshTokenValue,
 			user: {
-				id: user.id,
+				userId: user.id,
 				email: user.email.value,
 				roles: user.roles,
 			},

@@ -4,11 +4,11 @@ import { failure, Result, success } from '@backstream/core/result'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { Email, Phone } from '@/shared/domain'
 import { now } from '@/shared/infrastructure/clock'
-import { UserRegistered } from '../../contracts/events/user-registered'
-import { AuthenticatedUser } from '../../domain/authenticated-user'
 import { PasswordCredential } from '../../domain/password-credential'
 import { Role } from '../../domain/role'
 import { User } from '../../domain/user'
+import { UserRegistered } from '../../public/events/user-registered'
+import { AuthenticatedUser } from '../../public/types/authenticated-user'
 import {
 	EmailAlreadyRegisteredError,
 	PhoneAlreadyRegisteredError,
@@ -96,7 +96,7 @@ export class RegisterUseCase {
 
 		return success({
 			user: {
-				id: user.id,
+				userId: user.id,
 				email: user.email.value,
 				roles: user.roles,
 			},

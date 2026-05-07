@@ -18,8 +18,8 @@ import {
 	__resetIdGeneratorForTests,
 	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
-import { UserRegistered } from '../../contracts/events/user-registered'
 import { UserCreated } from '../../domain/events/user-created'
+import { UserRegistered } from '../../public/events/user-registered'
 import { InMemoryPasswordCredentialRepository } from '../../test/in-memory-password-credential-repository'
 import { InMemoryUserRepository } from '../../test/in-memory-user-repository'
 import {

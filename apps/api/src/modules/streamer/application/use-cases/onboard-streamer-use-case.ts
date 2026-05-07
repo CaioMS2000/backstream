@@ -3,9 +3,9 @@ import { IntegrationEventBus } from '@backstream/core/events/integration-event-b
 import { failure, Result, success } from '@backstream/core/result'
 import type { UniqueId } from '@backstream/core/unique-id'
 import { now } from '@/shared/infrastructure/clock'
-import { UserSummaryQuery } from '../../../auth/contracts/queries/user-summary-query'
-import { StreamerOnboarded } from '../../contracts/events/streamer-onboarded'
+import { UserSummaryQuery } from '../../../auth/public/queries/user-summary-query'
 import { Streamer } from '../../domain/streamer'
+import { StreamerOnboarded } from '../../public/events/streamer-onboarded'
 import {
 	AlreadyOnboardedError,
 	NotAStreamerError,

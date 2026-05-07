@@ -1,14 +1,14 @@
 import { failure, Result, success } from '@backstream/core/result'
-import { AuthenticatedUser } from '../../domain/authenticated-user'
+import { now } from '@/shared/infrastructure/clock'
+import { RefreshToken } from '../../domain/refresh-token'
+import { AuthenticatedUser } from '../../public/types/authenticated-user'
 import { InvalidCredentialsError } from '../@errors'
+import { REFRESH_TOKEN_EXPIRY_SECONDS } from '../constants'
 import { HashVerifier } from '../cryptography/hash-verifier'
 import { JwtService, JwtTokenGenerator } from '../jwt'
+import { PasswordCredentialRepository } from '../repositories/password-credential-repository'
 import { RefreshTokenRepository } from '../repositories/refresh-token-repository'
 import { UserRepository } from '../repositories/user-repository'
-import { PasswordCredentialRepository } from '../repositories/password-credential-repository'
-import { RefreshToken } from '../../domain/refresh-token'
-import { now } from '@/shared/infrastructure/clock'
-import { REFRESH_TOKEN_EXPIRY_SECONDS } from '../constants'
 
 export type LoginUseCaseRequest = {
 	email: string
@@ -81,7 +81,7 @@ export class LoginUseCase {
 			accessToken,
 			refreshToken: refreshTokenValue,
 			user: {
-				id: user.id,
+				userId: user.id,
 				email: user.email.value,
 				roles: user.roles,
 			},

@@ -21,8 +21,8 @@ import {
 import {
 	type UserSummary,
 	UserSummaryQuery,
-} from '../../../auth/contracts/queries/user-summary-query'
-import { StreamerOnboarded } from '../../contracts/events/streamer-onboarded'
+} from '../../../auth/public/queries/user-summary-query'
+import { StreamerOnboarded } from '../../public/events/streamer-onboarded'
 import { InMemoryStreamerRepository } from '../../test/in-memory-streamer-repository'
 import {
 	AlreadyOnboardedError,

@@ -3,7 +3,7 @@ import type { UserRepository } from '../../application/repositories/user-reposit
 import {
 	type UserSummary,
 	UserSummaryQuery,
-} from '../../contracts/queries/user-summary-query'
+} from '../../public/queries/user-summary-query'
 
 export class UserSummaryQueryFromRepo extends UserSummaryQuery {
 	constructor(private readonly userRepository: UserRepository) {

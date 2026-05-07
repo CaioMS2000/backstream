@@ -1,6 +1,6 @@
 import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
 import type { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
-import type { UserSummaryQuery } from '../auth/contracts/queries/user-summary-query'
+import type { UserSummaryQuery } from '../auth/public/queries/user-summary-query'
 import type { StreamerRepository } from './application/repositories/streamer-repository'
 import { ChangeStreamerSlugUseCase } from './application/use-cases/change-streamer-slug-use-case'
 import { OnboardStreamerUseCase } from './application/use-cases/onboard-streamer-use-case'

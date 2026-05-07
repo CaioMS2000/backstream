@@ -12,8 +12,11 @@ import { LogoutUseCase } from './application/use-cases/logout-use-case'
 import { RefreshTokenUseCase } from './application/use-cases/refresh-token-use-case'
 import { RegisterUseCase } from './application/use-cases/register-use-case'
 import { SocialLoginUseCase } from './application/use-cases/social-login-use-case'
-import type { UserSummaryQuery } from './contracts/queries/user-summary-query'
+import type { Role } from './domain/role'
 import { UserSummaryQueryFromRepo } from './infrastructure/queries/user-summary-query-from-repo'
+import type { UserSummaryQuery } from './public/queries/user-summary-query'
+import { AccessTokenVerifier } from './public/services/access-token-verifier'
+import type { AuthenticatedUser } from './public/types/authenticated-user'
 
 export type AuthModuleDependencies = {
 	userRepository: UserRepository
@@ -31,6 +34,9 @@ export type AuthModule = {
 	domainEvents: DomainEventDispatcher
 	queries: {
 		userSummary: UserSummaryQuery
+	}
+	services: {
+		accessTokenVerifier: AccessTokenVerifier
 	}
 	useCases: {
 		register: RegisterUseCase
@@ -53,6 +59,22 @@ export function buildAuthModule(deps: AuthModuleDependencies): AuthModule {
 	registerDomainHandlers(domainEvents, deps)
 
 	const userSummaryQuery = new UserSummaryQueryFromRepo(deps.userRepository)
+
+	const accessTokenVerifier: AccessTokenVerifier =
+		new (class extends AccessTokenVerifier {
+			async verify(token: string): Promise<AuthenticatedUser | null> {
+				const payload = await deps.jwtService.verifyAccessToken(token)
+				if (!payload) return null
+				if (typeof payload.sub !== 'string') return null
+				if (typeof payload.email !== 'string') return null
+				if (!Array.isArray(payload.roles)) return null
+				return {
+					userId: payload.sub,
+					email: payload.email,
+					roles: payload.roles as Role[],
+				}
+			}
+		})()
 
 	const register = new RegisterUseCase({
 		userRepository: deps.userRepository,
@@ -97,6 +119,9 @@ export function buildAuthModule(deps: AuthModuleDependencies): AuthModule {
 		domainEvents,
 		queries: {
 			userSummary: userSummaryQuery,
+		},
+		services: {
+			accessTokenVerifier,
 		},
 		useCases: {
 			register,

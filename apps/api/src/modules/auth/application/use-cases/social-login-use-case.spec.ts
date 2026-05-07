@@ -20,8 +20,8 @@ import {
 	__resetIdGeneratorForTests,
 	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
-import { UserRegistered } from '../../contracts/events/user-registered'
 import { User } from '../../domain/user'
+import { UserRegistered } from '../../public/events/user-registered'
 import { InMemoryOAuthAccountRepository } from '../../test/in-memory-oauth-account-repository'
 import { InMemoryRefreshTokenRepository } from '../../test/in-memory-refresh-token-repository'
 import { InMemoryUserRepository } from '../../test/in-memory-user-repository'
@@ -137,7 +137,7 @@ describe('SocialLoginUseCase', () => {
 		expect(result.isSuccess()).toBe(true)
 		if (result.isSuccess()) {
 			expect(result.value.isNewUser).toBe(false)
-			expect(result.value.user.id).toBe(user.id)
+			expect(result.value.user.userId).toBe(user.id)
 			expect(result.value.accessToken).toBe('fake-access-token')
 			expect(result.value.refreshToken).toBe('fake-refresh-token')
 		}
@@ -158,7 +158,7 @@ describe('SocialLoginUseCase', () => {
 		expect(result.isSuccess()).toBe(true)
 		if (result.isSuccess()) {
 			expect(result.value.isNewUser).toBe(false)
-			expect(result.value.user.id).toBe(user.id)
+			expect(result.value.user.userId).toBe(user.id)
 			expect(result.value.user.roles).toEqual(['streamer'])
 		}
 
