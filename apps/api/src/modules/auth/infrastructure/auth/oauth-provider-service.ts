@@ -1,71 +1,38 @@
-import { Google, generateCodeVerifier, generateState } from 'arctic'
-import { decodeJwt } from 'jose'
-
-export const OAuthProvider = ['google' /* 'facebook' */] as const
-export type OAuthProvider = (typeof OAuthProvider)[number]
-
-export type OAuthUserProfile = {
-	providerAccountId: string
-	email: string
-	name: string
-}
-
-type OAuthProviderServiceConfig = {
-	googleClientId: string
-	googleClientSecret: string
-	googleRedirectUri: string
-}
+import type {
+	CreateAuthorizationURLResult,
+	OAuthProviderAdapter,
+} from './oauth-adapters/oauth-provider-adapter'
+import type { OAuthProvider, OAuthUserProfile } from './oauth-types'
 
 export class OAuthProviderService {
-	private google: Google
+	private adapters: Map<OAuthProvider, OAuthProviderAdapter>
 
-	constructor(config: OAuthProviderServiceConfig) {
-		this.google = new Google(
-			config.googleClientId,
-			config.googleClientSecret,
-			config.googleRedirectUri
-		)
+	constructor(adapters: OAuthProviderAdapter[]) {
+		this.adapters = new Map(adapters.map(a => [a.provider, a]))
 	}
 
-	createAuthorizationURL(_provider: OAuthProvider): {
-		url: URL
-		state: string
-		codeVerifier: string
-	} {
-		const state = generateState()
-		const codeVerifier = generateCodeVerifier()
-		const url = this.google.createAuthorizationURL(state, codeVerifier, [
-			'openid',
-			'profile',
-			'email',
-		])
-
-		return { url, state, codeVerifier }
+	createAuthorizationURL(
+		provider: OAuthProvider
+	): CreateAuthorizationURLResult {
+		return this.getAdapter(provider).createAuthorizationURL()
 	}
 
-	async validateCodeAndGetProfile(
-		_provider: OAuthProvider,
+	validateCodeAndGetProfile(
+		provider: OAuthProvider,
 		code: string,
-		codeVerifier: string
+		codeVerifier: string | null
 	): Promise<OAuthUserProfile> {
-		return this.getGoogleProfile(code, codeVerifier)
-	}
-
-	private async getGoogleProfile(
-		code: string,
-		codeVerifier: string
-	): Promise<OAuthUserProfile> {
-		const tokens = await this.google.validateAuthorizationCode(
+		return this.getAdapter(provider).validateCodeAndGetProfile(
 			code,
 			codeVerifier
 		)
-		const idToken = tokens.idToken()
-		const claims = decodeJwt(idToken)
+	}
 
-		return {
-			providerAccountId: claims.sub!,
-			email: claims.email as string,
-			name: claims.name as string,
+	private getAdapter(provider: OAuthProvider): OAuthProviderAdapter {
+		const adapter = this.adapters.get(provider)
+		if (!adapter) {
+			throw new Error(`No OAuth adapter registered for provider "${provider}"`)
 		}
+		return adapter
 	}
 }
