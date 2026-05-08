@@ -16,11 +16,15 @@ export const envSchema = z.object({
 
 	// HTTP Server
 	PORT: z.coerce.number().default(3333).catch(3333),
-	AUTH_JWKS_URL: z.string(),
 
 	// Auth
+	AUTH_JWKS_URL: z.string(),
 	JWT_PRIVATE_KEY: z.string(),
 	JWT_PUBLIC_KEY: z.string(),
+	// Auth - Google
+	GOOGLE_CLIENT_ID: z.string().default('FAKE_GOOGLE_CLIENT_ID'),
+	GOOGLE_CLIENT_SECRET: z.string().default('FAKE_GOOGLE_CLIENT_SECRET'),
+	GOOGLE_REDIRECT_URI: z.string().default('FAKE_GOOGLE_REDIRECT_URI'),
 
 	// Database
 	DATABASE_URL: z.string(),
