@@ -26,6 +26,9 @@ export const envSchema = z.object({
 	GOOGLE_CLIENT_SECRET: z.string().default('FAKE_GOOGLE_CLIENT_SECRET'),
 	GOOGLE_REDIRECT_URI: z.string().default('FAKE_GOOGLE_REDIRECT_URI'),
 
+	// Frontend
+	FRONTEND_URL: z.url().default('http://localhost:3000'),
+
 	// Database
 	DATABASE_URL: z.string(),
 })

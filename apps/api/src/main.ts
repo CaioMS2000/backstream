@@ -21,6 +21,12 @@ async function bootstrap() {
 	const { PasswordService } = await import(
 		'@/modules/auth/infrastructure/auth/password-service'
 	)
+	const { OAuthProviderService } = await import(
+		'@/modules/auth/infrastructure/auth/oauth-provider-service'
+	)
+	const { GoogleOAuthAdapter } = await import(
+		'@/modules/auth/infrastructure/auth/oauth-adapters/google-oauth-adapter'
+	)
 	const { DrizzleUserRepository } = await import(
 		'@/modules/auth/infrastructure/database/repositories/user-repository'
 	)
@@ -29,6 +35,9 @@ async function bootstrap() {
 	)
 	const { DrizzleOAuthAccountRepository } = await import(
 		'@/modules/auth/infrastructure/database/repositories/oauth-account-repository'
+	)
+	const { DrizzleOAuthStateRepository } = await import(
+		'@/modules/auth/infrastructure/database/repositories/oauth-state-repository'
 	)
 	const { DrizzleRefreshTokenRepository } = await import(
 		'@/modules/auth/infrastructure/database/repositories/refresh-token-repository'
@@ -44,11 +53,19 @@ async function bootstrap() {
 	const integrationBus = new IntegrationEventBus()
 	const tokenService = new TokenService()
 	const passwordService = new PasswordService()
+	const oauthProviderService = new OAuthProviderService([
+		new GoogleOAuthAdapter({
+			clientId: env.GOOGLE_CLIENT_ID,
+			clientSecret: env.GOOGLE_CLIENT_SECRET,
+			redirectUri: env.GOOGLE_REDIRECT_URI,
+		}),
+	])
 
 	// 5. Repos drizzle
 	const userRepository = new DrizzleUserRepository()
 	const passwordCredentialRepository = new DrizzlePasswordCredentialRepository()
 	const oauthAccountRepository = new DrizzleOAuthAccountRepository()
+	const oauthStateRepository = new DrizzleOAuthStateRepository()
 	const refreshTokenRepository = new DrizzleRefreshTokenRepository()
 
 	// 6. Módulos (puros — domínio + use cases)
@@ -56,11 +73,13 @@ async function bootstrap() {
 		userRepository,
 		passwordCredentialRepository,
 		oauthAccountRepository,
+		oauthStateRepository,
 		refreshTokenRepository,
 		hashGenerator: passwordService,
 		hashVerifier: passwordService,
 		jwtService: tokenService,
 		tokenGenerator: tokenService,
+		oauthProviderService,
 		integrationBus,
 	})
 

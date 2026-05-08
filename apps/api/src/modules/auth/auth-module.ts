@@ -4,6 +4,7 @@ import type { HashGenerator } from './application/cryptography/hash-generator'
 import type { HashVerifier } from './application/cryptography/hash-verifier'
 import type { JwtService, JwtTokenGenerator } from './application/jwt'
 import type { OAuthAccountRepository } from './application/repositories/oauth-account-repository'
+import type { OAuthStateRepository } from './application/repositories/oauth-state-repository'
 import type { PasswordCredentialRepository } from './application/repositories/password-credential-repository'
 import type { RefreshTokenRepository } from './application/repositories/refresh-token-repository'
 import type { UserRepository } from './application/repositories/user-repository'
@@ -13,6 +14,7 @@ import { RefreshTokenUseCase } from './application/use-cases/refresh-token-use-c
 import { RegisterUseCase } from './application/use-cases/register-use-case'
 import { SocialLoginUseCase } from './application/use-cases/social-login-use-case'
 import type { Role } from './domain/role'
+import type { OAuthProviderService } from './infrastructure/auth/oauth-provider-service'
 import { UserSummaryQueryFromRepo } from './infrastructure/queries/user-summary-query-from-repo'
 import type { UserSummaryQuery } from './public/queries/user-summary-query'
 import { AccessTokenVerifier } from './public/services/access-token-verifier'
@@ -22,11 +24,13 @@ export type AuthModuleDependencies = {
 	userRepository: UserRepository
 	passwordCredentialRepository: PasswordCredentialRepository
 	oauthAccountRepository: OAuthAccountRepository
+	oauthStateRepository: OAuthStateRepository
 	refreshTokenRepository: RefreshTokenRepository
 	hashGenerator: HashGenerator
 	hashVerifier: HashVerifier
 	jwtService: JwtService
 	tokenGenerator: JwtTokenGenerator
+	oauthProviderService: OAuthProviderService
 	integrationBus: IntegrationEventBus
 }
 
@@ -37,6 +41,8 @@ export type AuthModule = {
 	}
 	services: {
 		accessTokenVerifier: AccessTokenVerifier
+		oauthProvider: OAuthProviderService
+		oauthState: OAuthStateRepository
 	}
 	useCases: {
 		register: RegisterUseCase
@@ -122,6 +128,8 @@ export function buildAuthModule(deps: AuthModuleDependencies): AuthModule {
 		},
 		services: {
 			accessTokenVerifier,
+			oauthProvider: deps.oauthProviderService,
+			oauthState: deps.oauthStateRepository,
 		},
 		useCases: {
 			register,

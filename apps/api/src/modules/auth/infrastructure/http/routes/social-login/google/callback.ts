@@ -1,0 +1,92 @@
+import { routeSchemas } from '@backstream/shared/types/http/routes/auth/social-login/google-callback'
+import { env } from '@/config'
+import type { HttpApp } from '@/http/app'
+import {
+	OAUTH_ACCESS_TOKEN_HANDOFF_SECONDS,
+	REFRESH_TOKEN_EXPIRY_SECONDS,
+} from '@/modules/auth/application/constants'
+import type { OAuthStateRepository } from '@/modules/auth/application/repositories/oauth-state-repository'
+import type { SocialLoginUseCase } from '@/modules/auth/application/use-cases/social-login-use-case'
+import type { OAuthProviderService } from '@/modules/auth/infrastructure/auth/oauth-provider-service'
+
+type GoogleSocialLoginCallbackRouteProps = {
+	app: HttpApp
+	oauthProviderService: OAuthProviderService
+	oauthStateRepository: OAuthStateRepository
+	socialLoginUseCase: SocialLoginUseCase
+}
+
+const { query, response } = routeSchemas
+
+export class GoogleSocialLoginCallbackRoute {
+	constructor(private readonly props: GoogleSocialLoginCallbackRouteProps) {}
+
+	register() {
+		this.props.app.get('/social-login/google/callback', {
+			schema: {
+				tags: ['Auth'],
+				summary: 'Callback de OAuth do Google',
+				security: [],
+				querystring: query,
+				response,
+			},
+			handler: async (request, reply) => {
+				const { code, state } = request.query
+
+				const stateData =
+					await this.props.oauthStateRepository.findAndDelete(state)
+
+				if (!stateData || stateData.provider !== 'google') {
+					return reply.status(400).send({ error: 'Invalid or expired state' })
+				}
+
+				const profile =
+					await this.props.oauthProviderService.validateCodeAndGetProfile(
+						'google',
+						code,
+						stateData.codeVerifier
+					)
+
+				if (stateData.role !== 'streamer' && stateData.role !== 'donor') {
+					return reply
+						.status(400)
+						.send({ error: 'Invalid role for social login' })
+				}
+
+				const result = await this.props.socialLoginUseCase.execute({
+					provider: 'google',
+					providerAccountId: profile.providerAccountId,
+					email: profile.email,
+					name: profile.name,
+					role: stateData.role,
+				})
+
+				if (result.isFailure()) {
+					return reply.redirect(
+						`${env.FRONTEND_URL}/oauth-error?reason=login-failed`
+					)
+				}
+
+				reply.setCookie('refresh_token', result.value.refreshToken, {
+					httpOnly: true,
+					secure: env.NODE_ENV === 'production',
+					sameSite: 'lax',
+					path: '/',
+					maxAge: REFRESH_TOKEN_EXPIRY_SECONDS,
+				})
+
+				reply.setCookie('access_token_handoff', result.value.accessToken, {
+					httpOnly: false,
+					secure: env.NODE_ENV === 'production',
+					sameSite: 'lax',
+					path: '/',
+					maxAge: OAUTH_ACCESS_TOKEN_HANDOFF_SECONDS,
+				})
+
+				return reply.redirect(
+					`${env.FRONTEND_URL}/oauth-success?new=${result.value.isNewUser}`
+				)
+			},
+		})
+	}
+}
