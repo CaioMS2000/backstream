@@ -19,19 +19,17 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "cache": true,
-      "inputs": ["**/*.spec.ts", "**/vitest.config.ts"]
+      "cache": true
     },
-    "test:e2e": {
+    "test:integration": {
       "dependsOn": ["^build"],
-      "cache": true,
-      "inputs": ["**/*.e2e-spec.ts", "**/vitest.config.e2e.ts"]
+      "cache": true
     },
     "test:watch": {
       "cache": false,
       "persistent": true
     },
-    "test:e2e:watch": {
+    "test:integration:watch": {
       "cache": false,
       "persistent": true
     },
@@ -43,6 +41,15 @@
     "test:debug": {
       "cache": false,
       "persistent": true
+    },
+    "db:generate": {
+      "cache": false
+    },
+    "db:migrate": {
+      "cache": false
+    },
+    "db:push": {
+      "cache": false
     }
   }
 }

@@ -5,9 +5,9 @@ export default defineConfig({
 	test: {
 		globals: true,
 		root: './',
-		include: ['**/*.e2e-spec.ts'],
+		include: ['**/*.integration-spec.ts'],
 		fileParallelism: false,
-		globalSetup: ['./test/global-setup.ts'],
+		globalSetup: ['./src/test/setup-integration.ts'],
 		env: { NODE_ENV: 'test' },
 	},
 	plugins: [tsConfigPaths({})],

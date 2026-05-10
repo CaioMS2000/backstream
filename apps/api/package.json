@@ -7,11 +7,14 @@
   "scripts": {
     "dev": "clear && tsx watch ./index.ts",
     "test": "vitest run",
-    "test:e2e": "vitest run --config vitest.config.e2e.ts",
+    "test:integration": "vitest run --config vitest.config.integration.ts",
     "test:watch": "vitest",
-    "test:e2e:watch": "vitest --config vitest.config.e2e.ts",
+    "test:integration:watch": "vitest --config vitest.config.integration.ts",
     "test:cov": "vitest run --coverage",
-    "test:debug": "vitest --inspect-brk --inspect --logHeapUsage --threads=false"
+    "test:debug": "vitest --inspect-brk --inspect --logHeapUsage --threads=false",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",

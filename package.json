@@ -11,7 +11,11 @@
     "test:cov": "turbo run test:cov",
     "test:debug": "turbo run test:debug",
     "test:watch": "turbo run test:watch",
-    "test:e2e": "turbo run test:e2e"
+    "test:integration": "turbo run test:integration",
+    "test:integration:watch": "turbo run test:integration:watch",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "db:push": "turbo run db:push"
   },
   "devDependencies": {
     "@caioms/biomejs-config": "latest",
