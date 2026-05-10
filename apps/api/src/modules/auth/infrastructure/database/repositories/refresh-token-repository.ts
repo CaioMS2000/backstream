@@ -1,19 +1,23 @@
 import { UniqueId } from '@backstream/core/unique-id'
 import { and, eq, isNull } from 'drizzle-orm'
-import { drizzle } from '@/lib/drizzle'
+import type { DrizzleClient } from '@/lib/drizzle'
 import { RefreshTokenRepository } from '@/modules/auth/application/repositories/refresh-token-repository'
 import { RefreshToken } from '@/modules/auth/domain/refresh-token'
 import { RefreshTokenMapper } from '../mappers/refresh-tokne-mapper'
 import { refreshToken } from '../schemas'
 
 export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
+	constructor(private db: DrizzleClient) {
+		super()
+	}
+
 	async save(token: RefreshToken): Promise<void> {
 		const newRecord = RefreshTokenMapper.toPersistence(token)
-		await drizzle.insert(refreshToken).values(newRecord)
+		await this.db.insert(refreshToken).values(newRecord)
 	}
 
 	async findByTokenHash(tokenHash: string): Promise<RefreshToken | null> {
-		const record = await drizzle.query.refreshToken.findFirst({
+		const record = await this.db.query.refreshToken.findFirst({
 			where: (table, { eq }) => eq(table.value, tokenHash),
 		})
 
@@ -23,7 +27,7 @@ export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
 	}
 
 	async revoke(tokenHash: string): Promise<void> {
-		const _result = await drizzle
+		const _result = await this.db
 			.update(refreshToken)
 			.set({ revokedAt: new Date() })
 			.where(
@@ -33,7 +37,7 @@ export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
 	}
 
 	async revokeAllForUser(userId: UniqueId): Promise<void> {
-		await drizzle
+		await this.db
 			.update(refreshToken)
 			.set({ revokedAt: new Date() })
 			.where(
@@ -42,7 +46,7 @@ export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
 	}
 
 	async markUsed(tokenHash: string): Promise<boolean> {
-		const result = await drizzle
+		const result = await this.db
 			.update(refreshToken)
 			.set({ usedAt: new Date() })
 			.where(
