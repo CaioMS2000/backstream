@@ -11,7 +11,8 @@ async function bootstrap() {
 	initializeClock()
 
 	// 3. Imports dinâmicos (após env validado)
-	const { app } = await import('@/http/app')
+	const { createApp } = await import('@/http/app')
+	const { createDrizzle } = await import('@/lib/drizzle')
 	const { IntegrationEventBus } = await import(
 		'@backstream/core/events/integration-event-bus'
 	)
@@ -49,6 +50,9 @@ async function bootstrap() {
 	const { makeAuthGuard } = await import('@/http/middleware/auth/authed')
 	const { makeAuthed } = await import('@/http/auth-factory')
 
+	const app = createApp()
+	const db = createDrizzle(env.DATABASE_URL)
+
 	// 4. Infra compartilhada
 	const integrationBus = new IntegrationEventBus()
 	const tokenService = new TokenService()
@@ -62,11 +66,13 @@ async function bootstrap() {
 	])
 
 	// 5. Repos drizzle
-	const userRepository = new DrizzleUserRepository()
-	const passwordCredentialRepository = new DrizzlePasswordCredentialRepository()
-	const oauthAccountRepository = new DrizzleOAuthAccountRepository()
-	const oauthStateRepository = new DrizzleOAuthStateRepository()
-	const refreshTokenRepository = new DrizzleRefreshTokenRepository()
+	const userRepository = new DrizzleUserRepository(db)
+	const passwordCredentialRepository = new DrizzlePasswordCredentialRepository(
+		db
+	)
+	const oauthAccountRepository = new DrizzleOAuthAccountRepository(db)
+	const oauthStateRepository = new DrizzleOAuthStateRepository(db)
+	const refreshTokenRepository = new DrizzleRefreshTokenRepository(db)
 
 	// 6. Módulos (puros — domínio + use cases)
 	const authModule = buildAuthModule({
