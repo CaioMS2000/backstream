@@ -21,7 +21,7 @@ export type RegisterUseCaseRequest = {
 	name: string
 	email: string
 	password: string
-	phone: string
+	phone: string | null
 	role: Role
 }
 
@@ -46,36 +46,31 @@ export class RegisterUseCase {
 	async execute(
 		input: RegisterUseCaseRequest
 	): Promise<RegisterUseCaseResponse> {
-		const existing = await this.props.userRepository.findByEmail(input.email)
-
-		if (existing) {
-			return failure(EmailAlreadyRegisteredError)
-		}
-
 		const emailResult = Email.create(input.email)
+		if (emailResult.isFailure()) return failure(emailResult.value)
 
-		if (emailResult.isFailure()) {
-			return failure(emailResult.value)
-		}
+		const phoneResult = this.parsePhone(input.phone)
+		if (phoneResult.isFailure()) return failure(phoneResult.value)
 
-		const phoneResult = Phone.create(input.phone)
+		const email = emailResult.value
+		const phone = phoneResult.value
 
-		if (phoneResult.isFailure()) {
-			return failure(phoneResult.value)
-		}
-
-		const existingPhone = await this.props.userRepository.findByPhone(
-			phoneResult.value.value
+		const existingEmail = await this.props.userRepository.findByEmail(
+			email.value
 		)
+		if (existingEmail) return failure(EmailAlreadyRegisteredError)
 
-		if (existingPhone) {
-			return failure(PhoneAlreadyRegisteredError)
+		if (phone) {
+			const existingPhone = await this.props.userRepository.findByPhone(
+				phone.value
+			)
+			if (existingPhone) return failure(PhoneAlreadyRegisteredError)
 		}
 
 		const user = await User.create({
-			email: emailResult.value,
+			email,
 			name: input.name,
-			phone: phoneResult.value,
+			phone,
 			roles: [input.role],
 			now: now(),
 		})
@@ -101,5 +96,12 @@ export class RegisterUseCase {
 				roles: user.roles,
 			},
 		})
+	}
+
+	private parsePhone(
+		raw: string | null
+	): Result<InvalidValueError, Phone | null> {
+		if (!raw) return success(null)
+		return Phone.create(raw)
 	}
 }
