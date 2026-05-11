@@ -17,6 +17,13 @@ export class Phone {
 		return success(new Phone(cleaned))
 	}
 
+	static createOptional(
+		raw: string | null
+	): Result<InvalidValueError, Phone | null> {
+		if (!raw) return success(null)
+		return Phone.create(raw)
+	}
+
 	equals(other: Phone): boolean {
 		return this.value === other.value
 	}

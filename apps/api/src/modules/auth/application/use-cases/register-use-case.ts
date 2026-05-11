@@ -49,7 +49,7 @@ export class RegisterUseCase {
 		const emailResult = Email.create(input.email)
 		if (emailResult.isFailure()) return failure(emailResult.value)
 
-		const phoneResult = this.parsePhone(input.phone)
+		const phoneResult = Phone.createOptional(input.phone)
 		if (phoneResult.isFailure()) return failure(phoneResult.value)
 
 		const email = emailResult.value
@@ -96,12 +96,5 @@ export class RegisterUseCase {
 				roles: user.roles,
 			},
 		})
-	}
-
-	private parsePhone(
-		raw: string | null
-	): Result<InvalidValueError, Phone | null> {
-		if (!raw) return success(null)
-		return Phone.create(raw)
 	}
 }

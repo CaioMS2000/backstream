@@ -101,6 +101,55 @@ describe('Phone', () => {
 		})
 	})
 
+	describe('createOptional', () => {
+		it('should return success with null when raw is null', () => {
+			const result = Phone.createOptional(null)
+
+			expect(result.isSuccess()).toBe(true)
+			if (result.isSuccess()) {
+				expect(result.value).toBeNull()
+			}
+		})
+
+		it('should return success with null when raw is empty string', () => {
+			const result = Phone.createOptional('')
+
+			expect(result.isSuccess()).toBe(true)
+			if (result.isSuccess()) {
+				expect(result.value).toBeNull()
+			}
+		})
+
+		it('should return success with Phone when raw is a valid number', () => {
+			const result = Phone.createOptional('556293765723')
+
+			expect(result.isSuccess()).toBe(true)
+			if (result.isSuccess()) {
+				expect(result.value?.value).toBe('556293765723')
+			}
+		})
+
+		it('should strip formatting when raw is a formatted number', () => {
+			const result = Phone.createOptional('+55 (62) 9376-5723')
+
+			expect(result.isSuccess()).toBe(true)
+			if (result.isSuccess()) {
+				expect(result.value?.value).toBe('556293765723')
+			}
+		})
+
+		it('should fail when raw is too short', () => {
+			const result = Phone.createOptional('5562937657')
+
+			expect(result.isFailure()).toBe(true)
+			if (result.isFailure()) {
+				expect(result.value.message).toBe(
+					'Phone must have between 12 and 13 digits'
+				)
+			}
+		})
+	})
+
 	describe('value object equality', () => {
 		it('should be equal when phones have the same value', () => {
 			const phone1Result = Phone.create('556293765723')
