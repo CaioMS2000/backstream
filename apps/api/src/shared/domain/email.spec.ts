@@ -92,6 +92,40 @@ describe('Email', () => {
 				expect(result.value.message).toBe('Invalid email format')
 			}
 		})
+
+		it('should normalize lowercase and trim before storing the value', () => {
+			const result = Email.create('  Caio@X.COM  ')
+
+			expect(result.isSuccess()).toBe(true)
+			if (result.isSuccess()) {
+				expect(result.value.value).toBe('caio@x.com')
+			}
+		})
+
+		it('should treat different casings as equal emails', () => {
+			const lowerResult = Email.create('a@b.com')
+			const upperResult = Email.create('A@B.COM')
+
+			expect(lowerResult.isSuccess()).toBe(true)
+			expect(upperResult.isSuccess()).toBe(true)
+			if (lowerResult.isSuccess() && upperResult.isSuccess()) {
+				expect(lowerResult.value.equals(upperResult.value)).toBe(true)
+			}
+		})
+	})
+
+	describe('normalize', () => {
+		it('should lowercase and trim raw input', () => {
+			expect(Email.normalize('  Caio@X.COM  ')).toBe('caio@x.com')
+		})
+
+		it('should return the same value when already normalized', () => {
+			expect(Email.normalize('already@lower.com')).toBe('already@lower.com')
+		})
+
+		it('should not validate — empty string returns empty string', () => {
+			expect(Email.normalize('')).toBe('')
+		})
 	})
 
 	describe('value object equality', () => {
