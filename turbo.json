@@ -50,6 +50,9 @@
     },
     "db:push": {
       "cache": false
+    },
+    "db:cleanup-test-schemas": {
+      "cache": false
     }
   }
 }
