@@ -65,7 +65,9 @@ export class SocialLoginUseCase {
 			}
 		}
 
-		const userByEmail = await this.props.userRepository.findByEmail(input.email)
+		const userByEmail = await this.props.userRepository.findByEmail(
+			Email.normalize(input.email)
+		)
 
 		if (userByEmail) {
 			await this.props.oauthAccountRepository.save({

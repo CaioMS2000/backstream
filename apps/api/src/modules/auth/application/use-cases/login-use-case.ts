@@ -1,4 +1,5 @@
 import { failure, Result, success } from '@backstream/core/result'
+import { Email } from '@/shared/domain'
 import { now } from '@/shared/infrastructure/clock'
 import { RefreshToken } from '../../domain/refresh-token'
 import { AuthenticatedUser } from '../../public/types/authenticated-user'
@@ -37,7 +38,9 @@ export class LoginUseCase {
 	constructor(protected props: UseCaseProps) {}
 
 	async execute(input: LoginUseCaseRequest): Promise<LoginUseCaseResponse> {
-		const user = await this.props.userRepository.findByEmail(input.email)
+		const user = await this.props.userRepository.findByEmail(
+			Email.normalize(input.email)
+		)
 
 		if (!user || user.isRevoked()) {
 			return failure(InvalidCredentialsError)
