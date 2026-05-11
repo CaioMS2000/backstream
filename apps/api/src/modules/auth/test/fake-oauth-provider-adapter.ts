@@ -9,6 +9,7 @@ import type {
 
 export class FakeOAuthProviderAdapter extends OAuthProviderAdapter {
 	readonly provider: OAuthProvider
+	mockError?: Error
 
 	constructor(
 		provider: OAuthProvider,
@@ -30,6 +31,7 @@ export class FakeOAuthProviderAdapter extends OAuthProviderAdapter {
 	}
 
 	async validateCodeAndGetProfile(): Promise<OAuthUserProfile> {
+		if (this.mockError) throw this.mockError
 		return this.mockProfile
 	}
 }

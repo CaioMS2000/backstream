@@ -1,4 +1,5 @@
 import { routeSchemas } from '@backstream/shared/types/http/routes/auth/social-login/google-callback'
+import { ArcticFetchError, OAuth2RequestError } from 'arctic'
 import { env } from '@/config'
 import type { HttpApp } from '@/http/app'
 import {
@@ -40,52 +41,75 @@ export class GoogleSocialLoginCallbackRoute {
 					return reply.status(400).send({ error: 'Invalid or expired state' })
 				}
 
-				const profile =
-					await this.props.oauthProviderService.validateCodeAndGetProfile(
-						'google',
-						code,
-						stateData.codeVerifier
-					)
+				try {
+					const profile =
+						await this.props.oauthProviderService.validateCodeAndGetProfile(
+							'google',
+							code,
+							stateData.codeVerifier
+						)
 
-				if (stateData.role !== 'streamer' && stateData.role !== 'donor') {
-					return reply
-						.status(400)
-						.send({ error: 'Invalid role for social login' })
-				}
+					if (stateData.role !== 'streamer' && stateData.role !== 'donor') {
+						return reply
+							.status(400)
+							.send({ error: 'Invalid role for social login' })
+					}
 
-				const result = await this.props.socialLoginUseCase.execute({
-					provider: 'google',
-					providerAccountId: profile.providerAccountId,
-					email: profile.email,
-					name: profile.name,
-					role: stateData.role,
-				})
+					const result = await this.props.socialLoginUseCase.execute({
+						provider: 'google',
+						providerAccountId: profile.providerAccountId,
+						email: profile.email,
+						name: profile.name,
+						role: stateData.role,
+					})
 
-				if (result.isFailure()) {
+					if (result.isFailure()) {
+						return reply.redirect(
+							`${env.FRONTEND_URL}/oauth-error?reason=login-failed`
+						)
+					}
+
+					reply.setCookie('refresh_token', result.value.refreshToken, {
+						httpOnly: true,
+						secure: env.NODE_ENV === 'production',
+						sameSite: 'lax',
+						path: '/',
+						maxAge: REFRESH_TOKEN_EXPIRY_SECONDS,
+					})
+
+					reply.setCookie('access_token_handoff', result.value.accessToken, {
+						httpOnly: false,
+						secure: env.NODE_ENV === 'production',
+						sameSite: 'lax',
+						path: '/',
+						maxAge: OAUTH_ACCESS_TOKEN_HANDOFF_SECONDS,
+					})
+
 					return reply.redirect(
-						`${env.FRONTEND_URL}/oauth-error?reason=login-failed`
+						`${env.FRONTEND_URL}/oauth-success?new=${result.value.isNewUser}`
+					)
+				} catch (err) {
+					if (err instanceof OAuth2RequestError) {
+						const userFacing =
+							err.code === 'invalid_grant' || err.code === 'invalid_request'
+						if (!userFacing) {
+							request.log.error({ err }, 'OAuth provider config error')
+						}
+						return reply.redirect(
+							`${env.FRONTEND_URL}/oauth-error?reason=${userFacing ? 'invalid-code' : 'unknown'}`
+						)
+					}
+					if (err instanceof ArcticFetchError) {
+						request.log.warn({ err }, 'OAuth provider network error')
+						return reply.redirect(
+							`${env.FRONTEND_URL}/oauth-error?reason=provider-unavailable`
+						)
+					}
+					request.log.error({ err }, 'Unexpected error in OAuth callback')
+					return reply.redirect(
+						`${env.FRONTEND_URL}/oauth-error?reason=unknown`
 					)
 				}
-
-				reply.setCookie('refresh_token', result.value.refreshToken, {
-					httpOnly: true,
-					secure: env.NODE_ENV === 'production',
-					sameSite: 'lax',
-					path: '/',
-					maxAge: REFRESH_TOKEN_EXPIRY_SECONDS,
-				})
-
-				reply.setCookie('access_token_handoff', result.value.accessToken, {
-					httpOnly: false,
-					secure: env.NODE_ENV === 'production',
-					sameSite: 'lax',
-					path: '/',
-					maxAge: OAUTH_ACCESS_TOKEN_HANDOFF_SECONDS,
-				})
-
-				return reply.redirect(
-					`${env.FRONTEND_URL}/oauth-success?new=${result.value.isNewUser}`
-				)
 			},
 		})
 	}

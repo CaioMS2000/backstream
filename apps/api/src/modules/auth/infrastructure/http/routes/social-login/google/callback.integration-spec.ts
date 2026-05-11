@@ -1,5 +1,6 @@
 import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
 import { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
+import { ArcticFetchError, OAuth2RequestError } from 'arctic'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import type { JWTPayload } from 'jose'
 import {
@@ -75,6 +76,7 @@ describe('GET /social-login/google/callback (integration)', () => {
 	let app: HttpApp
 	let db: DrizzleClient
 	let oauthStateRepository: DrizzleOAuthStateRepository
+	let fakeAdapter: FakeOAuthProviderAdapter
 
 	beforeAll(async () => {
 		initializeClock()
@@ -82,7 +84,7 @@ describe('GET /social-login/google/callback (integration)', () => {
 
 		db = createDrizzle(inject('databaseUrl'))
 
-		const fakeAdapter = new FakeOAuthProviderAdapter('google', FAKE_PROFILE)
+		fakeAdapter = new FakeOAuthProviderAdapter('google', FAKE_PROFILE)
 		const oauthProviderService = new OAuthProviderService([fakeAdapter])
 
 		oauthStateRepository = new DrizzleOAuthStateRepository(db)
@@ -114,6 +116,7 @@ describe('GET /social-login/google/callback (integration)', () => {
 
 	afterEach(async () => {
 		await resetDb(db)
+		fakeAdapter.mockError = undefined
 	})
 
 	afterAll(async () => {
@@ -222,5 +225,63 @@ describe('GET /social-login/google/callback (integration)', () => {
 
 		expect(response.statusCode).toBe(400)
 		expect(response.json()).toEqual({ error: 'Invalid or expired state' })
+	})
+
+	it('redireciona para oauth-error?reason=invalid-code quando o provider rejeita o code (invalid_grant)', async () => {
+		await seedState('s-invalid-grant')
+		fakeAdapter.mockError = new OAuth2RequestError(
+			'invalid_grant',
+			'Code expired',
+			null,
+			null
+		)
+
+		const response = await app.inject({
+			method: 'GET',
+			url: '/social-login/google/callback?code=c-expired&state=s-invalid-grant',
+		})
+
+		expect(response.statusCode).toBe(302)
+		expect(response.headers.location).toBe(
+			`${env.FRONTEND_URL}/oauth-error?reason=invalid-code`
+		)
+
+		const users = await db.select().from(userTable)
+		expect(users).toHaveLength(0)
+	})
+
+	it('redireciona para oauth-error?reason=provider-unavailable em falha de rede', async () => {
+		await seedState('s-network')
+		fakeAdapter.mockError = new ArcticFetchError(new Error('ECONNREFUSED'))
+
+		const response = await app.inject({
+			method: 'GET',
+			url: '/social-login/google/callback?code=c-1&state=s-network',
+		})
+
+		expect(response.statusCode).toBe(302)
+		expect(response.headers.location).toBe(
+			`${env.FRONTEND_URL}/oauth-error?reason=provider-unavailable`
+		)
+	})
+
+	it('redireciona para oauth-error?reason=unknown em erro de config (invalid_client)', async () => {
+		await seedState('s-config')
+		fakeAdapter.mockError = new OAuth2RequestError(
+			'invalid_client',
+			'Bad client credentials',
+			null,
+			null
+		)
+
+		const response = await app.inject({
+			method: 'GET',
+			url: '/social-login/google/callback?code=c-1&state=s-config',
+		})
+
+		expect(response.statusCode).toBe(302)
+		expect(response.headers.location).toBe(
+			`${env.FRONTEND_URL}/oauth-error?reason=unknown`
+		)
 	})
 })
