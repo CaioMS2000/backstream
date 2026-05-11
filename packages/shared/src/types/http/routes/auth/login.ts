@@ -10,7 +10,7 @@ const body = z.object({
 
 const response = {
 	200: z.object({
-		accessToken: z.email(),
+		accessToken: z.string(),
 		// refreshToken: z.string().min(3),
 		user: userSchema,
 	}),
