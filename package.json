@@ -15,7 +15,8 @@
     "test:integration:watch": "turbo run test:integration:watch",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
-    "db:push": "turbo run db:push"
+    "db:push": "turbo run db:push",
+    "db:cleanup-test-schemas": "turbo run db:cleanup-test-schemas"
   },
   "devDependencies": {
     "@caioms/biomejs-config": "latest",
