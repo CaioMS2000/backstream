@@ -1,16 +1,26 @@
+// auth-factory.ts
 import type {
 	preHandlerAsyncHookHandler,
-	RouteGenericInterface,
+	FastifySchema,
 	RouteHandlerMethod,
 	RouteShorthandOptions,
 } from 'fastify'
-import { AuthHandler } from './types'
+import type { AuthHandler, AuthHandlerWithSchema } from './types'
 
 export function makeAuthed(authenticate: preHandlerAsyncHookHandler) {
-	return function authed<T extends RouteGenericInterface>(
-		handler: AuthHandler<T>,
-		extra: RouteShorthandOptions = {}
-	): RouteShorthandOptions & { handler: RouteHandlerMethod } {
+	// overload 1: com schema → infere body/params/query
+	function authed<S extends FastifySchema>(
+		handler: AuthHandlerWithSchema<S>,
+		extra: RouteShorthandOptions & { schema: S }
+	): RouteShorthandOptions & { handler: RouteHandlerMethod }
+
+	// overload 2: sem schema → AuthHandler clássico (tudo unknown)
+	function authed(
+		handler: AuthHandler,
+		extra?: RouteShorthandOptions
+	): RouteShorthandOptions & { handler: RouteHandlerMethod }
+
+	function authed(handler: unknown, extra: RouteShorthandOptions = {}) {
 		return {
 			...extra,
 			preHandler: extra.preHandler
@@ -24,6 +34,8 @@ export function makeAuthed(authenticate: preHandlerAsyncHookHandler) {
 			handler: handler as RouteHandlerMethod,
 		}
 	}
+
+	return authed
 }
 
 export type Authed = ReturnType<typeof makeAuthed>
