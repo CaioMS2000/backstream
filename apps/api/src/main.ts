@@ -47,6 +47,15 @@ async function bootstrap() {
 	const { registerAuthRoutes } = await import(
 		'@/modules/auth/infrastructure/http/routes'
 	)
+	const { DrizzleProfileRepository } = await import(
+		'@/modules/profile/infrastructure/database/repositories/profile-repository'
+	)
+	const { buildProfileModule } = await import(
+		'@/modules/profile/profile-module'
+	)
+	const { registerProfileRoutes } = await import(
+		'@/modules/profile/infrastructure/http/routes'
+	)
 	const { makeAuthGuard } = await import('@/http/middleware/auth/authed')
 	const { makeAuthed } = await import('@/http/auth-factory')
 
@@ -73,6 +82,7 @@ async function bootstrap() {
 	const oauthAccountRepository = new DrizzleOAuthAccountRepository(db)
 	const oauthStateRepository = new DrizzleOAuthStateRepository(db)
 	const refreshTokenRepository = new DrizzleRefreshTokenRepository(db)
+	const profileRepository = new DrizzleProfileRepository(db)
 
 	// 6. Módulos (puros — domínio + use cases)
 	const authModule = buildAuthModule({
@@ -89,6 +99,11 @@ async function bootstrap() {
 		integrationBus,
 	})
 
+	const profileModule = buildProfileModule({
+		integrationBus,
+		profileRepository,
+	})
+
 	// 7. Primitivas HTTP de auth (criadas UMA vez)
 	const authenticate = makeAuthGuard(authModule.services.accessTokenVerifier)
 	const authed = makeAuthed(authenticate)
@@ -100,6 +115,14 @@ async function bootstrap() {
 		registerAuthRoutes({
 			app: instance.withTypeProvider<ZodTypeProvider>(),
 			authModule,
+			authed,
+		})
+	})
+
+	app.register(async instance => {
+		registerProfileRoutes({
+			app: instance.withTypeProvider<ZodTypeProvider>(),
+			profileModule,
 			authed,
 		})
 	})
