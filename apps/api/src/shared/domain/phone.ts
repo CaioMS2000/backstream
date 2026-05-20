@@ -27,4 +27,8 @@ export class Phone {
 	equals(other: Phone): boolean {
 		return this.value === other.value
 	}
+
+	static __create(value: string): Phone {
+		return new Phone(value)
+	}
 }
