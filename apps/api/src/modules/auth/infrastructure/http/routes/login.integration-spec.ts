@@ -118,8 +118,6 @@ describe('POST /login (integration)', () => {
 		await db.insert(userTable).values({
 			id: userId,
 			email: opts.email,
-			name: 'Test User',
-			phone: null,
 			roles: ['donor'],
 			revokedAt: null,
 		})

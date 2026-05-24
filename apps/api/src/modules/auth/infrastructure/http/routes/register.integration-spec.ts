@@ -41,10 +41,8 @@ class FakeHashGenerator extends HashGenerator {
 }
 
 const baseBody = {
-	name: 'Caio Marques',
 	email: 'caio@example.com',
 	password: 'secret-password',
-	phone: '5511987654321',
 	role: 'donor' as const,
 }
 
@@ -110,8 +108,6 @@ describe('POST /register (integration)', () => {
 		expect(users).toHaveLength(1)
 		expect(users[0]).toMatchObject({
 			email: baseBody.email,
-			name: baseBody.name,
-			phone: baseBody.phone,
 			roles: ['donor'],
 		})
 
@@ -142,8 +138,6 @@ describe('POST /register (integration)', () => {
 		await db.insert(userTable).values({
 			id: 'existing-1',
 			email: baseBody.email,
-			name: 'Existing User',
-			phone: '5511000000000',
 			roles: ['donor'],
 			revokedAt: null,
 		})
@@ -161,53 +155,6 @@ describe('POST /register (integration)', () => {
 		expect(users).toHaveLength(1)
 		expect(users[0].id).toBe('existing-1')
 
-		const credentials = await db.select().from(passwordCredential)
-		expect(credentials).toHaveLength(0)
-		expect(userRegisteredSubscriber).not.toHaveBeenCalled()
-	})
-
-	it('retorna 409 quando o phone já está registrado', async () => {
-		await db.insert(userTable).values({
-			id: 'existing-2',
-			email: 'outro@example.com',
-			name: 'Outro User',
-			phone: baseBody.phone,
-			roles: ['donor'],
-			revokedAt: null,
-		})
-
-		const response = await app.inject({
-			method: 'POST',
-			url: '/register',
-			payload: baseBody,
-		})
-
-		expect(response.statusCode).toBe(409)
-		expect(response.json()).toEqual({ error: 'Phone already registered' })
-
-		const users = await db.select().from(userTable)
-		expect(users).toHaveLength(1)
-		expect(users[0].id).toBe('existing-2')
-
-		const credentials = await db.select().from(passwordCredential)
-		expect(credentials).toHaveLength(0)
-		expect(userRegisteredSubscriber).not.toHaveBeenCalled()
-	})
-
-	it('retorna 409 quando o phone passa pelo zod mas falha no domínio', async () => {
-		const response = await app.inject({
-			method: 'POST',
-			url: '/register',
-			payload: { ...baseBody, phone: 'abc' },
-		})
-
-		expect(response.statusCode).toBe(409)
-		expect(response.json()).toEqual({
-			error: 'Phone must have between 12 and 13 digits',
-		})
-
-		const users = await db.select().from(userTable)
-		expect(users).toHaveLength(0)
 		const credentials = await db.select().from(passwordCredential)
 		expect(credentials).toHaveLength(0)
 		expect(userRegisteredSubscriber).not.toHaveBeenCalled()

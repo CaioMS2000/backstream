@@ -7,6 +7,7 @@ import { now } from '@/shared/infrastructure/clock'
 import { RefreshToken } from '../../domain/refresh-token'
 import { Role } from '../../domain/role'
 import { User } from '../../domain/user'
+import { SocialUserRegistered } from '../../public/events/social-user-registered'
 import { UserRegistered } from '../../public/events/user-registered'
 import { AuthenticatedUser } from '../../public/types/authenticated-user'
 import { REFRESH_TOKEN_EXPIRY_SECONDS } from '../constants'
@@ -86,8 +87,6 @@ export class SocialLoginUseCase {
 
 		const user = await User.create({
 			email: emailResult.value,
-			name: input.name,
-			phone: null,
 			roles: [input.role],
 			now: now(),
 		})
@@ -102,6 +101,9 @@ export class SocialLoginUseCase {
 		await user.dispatchDomainEvents(this.props.domainEvents)
 		await this.props.integrationBus.publish(
 			new UserRegistered(user.id, user.email.value, now())
+		)
+		await this.props.integrationBus.publish(
+			new SocialUserRegistered(user.id, { name: input.name }, now())
 		)
 
 		return this.issueTokens(user, true)

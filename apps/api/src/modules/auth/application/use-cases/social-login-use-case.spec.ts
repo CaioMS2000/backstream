@@ -21,6 +21,7 @@ import {
 	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
 import { User } from '../../domain/user'
+import { SocialUserRegistered } from '../../public/events/social-user-registered'
 import { UserRegistered } from '../../public/events/user-registered'
 import { InMemoryOAuthAccountRepository } from '../../test/in-memory-oauth-account-repository'
 import { InMemoryRefreshTokenRepository } from '../../test/in-memory-refresh-token-repository'
@@ -63,6 +64,9 @@ describe('SocialLoginUseCase', () => {
 	let domainEvents: DomainEventDispatcher
 	let integrationBus: IntegrationEventBus
 	let userRegisteredSubscriber: Mock<(event: UserRegistered) => Promise<void>>
+	let socialUserRegisteredSubscriber: Mock<
+		(event: SocialUserRegistered) => Promise<void>
+	>
 	let sut: SocialLoginUseCase
 
 	const baseInput = {
@@ -84,6 +88,13 @@ describe('SocialLoginUseCase', () => {
 		integrationBus = new IntegrationEventBus()
 		userRegisteredSubscriber = vi.fn(async (_event: UserRegistered) => {})
 		integrationBus.subscribe(UserRegistered, userRegisteredSubscriber)
+		socialUserRegisteredSubscriber = vi.fn(
+			async (_event: SocialUserRegistered) => {}
+		)
+		integrationBus.subscribe(
+			SocialUserRegistered,
+			socialUserRegisteredSubscriber
+		)
 
 		sut = new SocialLoginUseCase({
 			userRepository: userRepo,
@@ -103,7 +114,6 @@ describe('SocialLoginUseCase', () => {
 
 	async function seedUser(opts: {
 		email: string
-		name?: string
 		roles: ('streamer' | 'donor')[]
 	}): Promise<User> {
 		const emailResult = Email.create(opts.email)
@@ -112,8 +122,6 @@ describe('SocialLoginUseCase', () => {
 		}
 		const user = await User.create({
 			email: emailResult.value,
-			name: opts.name ?? 'Seeded User',
-			phone: null,
 			roles: opts.roles,
 			now: new Date(),
 		})
@@ -191,6 +199,13 @@ describe('SocialLoginUseCase', () => {
 		expect(event).toBeInstanceOf(UserRegistered)
 		expect(event.userId).toBe(userRepo.items[0].id)
 		expect(event.email).toBe(baseInput.email)
+
+		expect(socialUserRegisteredSubscriber).toHaveBeenCalledTimes(1)
+		const socialEvent = socialUserRegisteredSubscriber.mock
+			.calls[0][0] as SocialUserRegistered
+		expect(socialEvent).toBeInstanceOf(SocialUserRegistered)
+		expect(socialEvent.userId).toBe(userRepo.items[0].id)
+		expect(socialEvent.providerProfile.name).toBe(baseInput.name)
 	})
 
 	it('deve criar novo usuário (streamer) quando não existe', async () => {
@@ -218,7 +233,7 @@ describe('SocialLoginUseCase', () => {
 		expect(refreshTokenRepo.items).toHaveLength(0)
 	})
 
-	it('não deve publicar UserRegistered quando logando usuário existente', async () => {
+	it('não deve publicar UserRegistered nem SocialUserRegistered quando logando usuário existente', async () => {
 		const user = await seedUser({
 			email: baseInput.email,
 			roles: ['donor'],
@@ -232,5 +247,18 @@ describe('SocialLoginUseCase', () => {
 		await sut.execute(baseInput)
 
 		expect(userRegisteredSubscriber).not.toHaveBeenCalled()
+		expect(socialUserRegisteredSubscriber).not.toHaveBeenCalled()
+	})
+
+	it('não deve publicar SocialUserRegistered em auto-link por email', async () => {
+		await seedUser({
+			email: baseInput.email,
+			roles: ['streamer'],
+		})
+
+		await sut.execute(baseInput)
+
+		expect(userRegisteredSubscriber).not.toHaveBeenCalled()
+		expect(socialUserRegisteredSubscriber).not.toHaveBeenCalled()
 	})
 })

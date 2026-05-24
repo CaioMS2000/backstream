@@ -21,8 +21,4 @@ export class InMemoryUserRepository extends UserRepository {
 	async findByEmail(email: string): Promise<User | null> {
 		return this.items.find(u => u.email.value === email) ?? null
 	}
-
-	async findByPhone(phone: string): Promise<User | null> {
-		return this.items.find(u => u.phone?.value === phone) ?? null
-	}
 }

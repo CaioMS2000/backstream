@@ -2,31 +2,26 @@ import { DomainEventDispatcher } from '@backstream/core/events/domain-event-disp
 import { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
 import { failure, Result, success } from '@backstream/core/result'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
-import { Email, Phone } from '@/shared/domain'
+import { Email } from '@/shared/domain'
 import { now } from '@/shared/infrastructure/clock'
 import { PasswordCredential } from '../../domain/password-credential'
 import { Role } from '../../domain/role'
 import { User } from '../../domain/user'
 import { UserRegistered } from '../../public/events/user-registered'
 import { AuthenticatedUser } from '../../public/types/authenticated-user'
-import {
-	EmailAlreadyRegisteredError,
-	PhoneAlreadyRegisteredError,
-} from '../@errors'
+import { EmailAlreadyRegisteredError } from '../@errors'
 import { HashGenerator } from '../cryptography/hash-generator'
 import { PasswordCredentialRepository } from '../repositories/password-credential-repository'
 import { UserRepository } from '../repositories/user-repository'
 
 export type RegisterUseCaseRequest = {
-	name: string
 	email: string
 	password: string
-	phone: string | null
 	role: Role
 }
 
 export type RegisterUseCaseResponse = Result<
-	EmailAlreadyRegisteredError | PhoneAlreadyRegisteredError | InvalidValueError,
+	EmailAlreadyRegisteredError | InvalidValueError,
 	{
 		user: AuthenticatedUser
 	}
@@ -49,28 +44,15 @@ export class RegisterUseCase {
 		const emailResult = Email.create(input.email)
 		if (emailResult.isFailure()) return failure(emailResult.value)
 
-		const phoneResult = Phone.createOptional(input.phone)
-		if (phoneResult.isFailure()) return failure(phoneResult.value)
-
 		const email = emailResult.value
-		const phone = phoneResult.value
 
 		const existingEmail = await this.props.userRepository.findByEmail(
 			email.value
 		)
 		if (existingEmail) return failure(EmailAlreadyRegisteredError)
 
-		if (phone) {
-			const existingPhone = await this.props.userRepository.findByPhone(
-				phone.value
-			)
-			if (existingPhone) return failure(PhoneAlreadyRegisteredError)
-		}
-
 		const user = await User.create({
 			email,
-			name: input.name,
-			phone,
 			roles: [input.role],
 			now: now(),
 		})

@@ -22,10 +22,7 @@ import { UserCreated } from '../../domain/events/user-created'
 import { UserRegistered } from '../../public/events/user-registered'
 import { InMemoryPasswordCredentialRepository } from '../../test/in-memory-password-credential-repository'
 import { InMemoryUserRepository } from '../../test/in-memory-user-repository'
-import {
-	EmailAlreadyRegisteredError,
-	PhoneAlreadyRegisteredError,
-} from '../@errors'
+import { EmailAlreadyRegisteredError } from '../@errors'
 import { HashGenerator } from '../cryptography/hash-generator'
 import { RegisterUseCase } from './register-use-case'
 
@@ -44,10 +41,8 @@ describe('RegisterUseCase', () => {
 	let sut: RegisterUseCase
 
 	const baseInput = {
-		name: 'Caio Marques',
 		email: 'caio@example.com',
 		password: 'secret-password',
-		phone: '5511987654321',
 		role: 'donor' as const,
 	}
 
@@ -106,30 +101,11 @@ describe('RegisterUseCase', () => {
 		await sut.execute(baseInput)
 		userRegisteredSubscriber.mockClear()
 
-		const result = await sut.execute({
-			...baseInput,
-			phone: '5511999998888',
-		})
+		const result = await sut.execute(baseInput)
 
 		expect(result.isFailure()).toBe(true)
 		if (result.isFailure()) {
 			expect(result.value).toBeInstanceOf(EmailAlreadyRegisteredError)
-		}
-		expect(userRegisteredSubscriber).not.toHaveBeenCalled()
-	})
-
-	it('deve falhar com PhoneAlreadyRegisteredError quando o telefone já existe', async () => {
-		await sut.execute(baseInput)
-		userRegisteredSubscriber.mockClear()
-
-		const result = await sut.execute({
-			...baseInput,
-			email: 'outro@example.com',
-		})
-
-		expect(result.isFailure()).toBe(true)
-		if (result.isFailure()) {
-			expect(result.value).toBeInstanceOf(PhoneAlreadyRegisteredError)
 		}
 		expect(userRegisteredSubscriber).not.toHaveBeenCalled()
 	})

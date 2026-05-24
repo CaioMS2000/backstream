@@ -34,14 +34,4 @@ export class DrizzleUserRepository extends UserRepository {
 
 		return UserMapper.toDomain(record)
 	}
-
-	async findByPhone(phone: string): Promise<User | null> {
-		const record = await this.db.query.user.findFirst({
-			where: (table, { eq }) => eq(table.phone, phone),
-		})
-
-		if (!record) return null
-
-		return UserMapper.toDomain(record)
-	}
 }

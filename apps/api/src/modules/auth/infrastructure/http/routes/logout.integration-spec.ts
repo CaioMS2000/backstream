@@ -98,8 +98,6 @@ describe('POST /logout (integration)', () => {
 		await db.insert(userTable).values({
 			id: USER_ID,
 			email: USER_EMAIL,
-			name: 'Test User',
-			phone: null,
 			roles: ['donor'],
 			revokedAt: null,
 		})
