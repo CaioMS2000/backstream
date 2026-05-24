@@ -1,8 +1,10 @@
 import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
 import type { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
+import { SocialUserRegistered } from '@/modules/auth/public/events/social-user-registered'
+import { ProfileAlreadyExistsError } from './application/@errors/profile-already-exists-error'
+import { ProfileRepository } from './application/repositories/profile-repository'
 import { CreateProfileUseCase } from './application/use-cases/create-profile-use-case'
 import { UpdateProfileUseCase } from './application/use-cases/update-profile-use-case'
-import { ProfileRepository } from './application/repositories/profile-repository'
 
 export type ProfileModuleDependencies = {
 	integrationBus: IntegrationEventBus
@@ -25,29 +27,50 @@ function registerDomainHandlers(
 }
 
 function registerIntegrationSubscribers(
-	_deps: ProfileModuleDependencies
+	deps: ProfileModuleDependencies,
+	handlers: { createProfileUseCase: CreateProfileUseCase }
 ): void {
-	// Intencionalmente vazio. O módulo de profile não tem eventos de integração para escutar no momento.
+	deps.integrationBus.subscribe(SocialUserRegistered, async event => {
+		const result = await handlers.createProfileUseCase.execute({
+			userId: event.userId,
+			name: event.providerProfile.name,
+			phone: null,
+		})
+
+		if (
+			result.isFailure() &&
+			!(result.value instanceof ProfileAlreadyExistsError)
+		) {
+			console.warn('[profile] pre-populate from SocialUserRegistered failed', {
+				userId: event.userId,
+				error: result.value.message,
+			})
+		}
+	})
 }
 
 export function buildProfileModule(
 	deps: ProfileModuleDependencies
 ): ProfileModule {
 	const domainEvents = new DomainEventDispatcher()
+
+	const createProfileUseCase = new CreateProfileUseCase({
+		profileRepository: deps.profileRepository,
+		domainEvents,
+	})
+	const updateProfileUseCase = new UpdateProfileUseCase({
+		profileRepository: deps.profileRepository,
+		domainEvents,
+	})
+
 	registerDomainHandlers(domainEvents, deps)
-	registerIntegrationSubscribers(deps)
+	registerIntegrationSubscribers(deps, { createProfileUseCase })
 
 	return {
 		domainEvents,
 		useCases: {
-			createProfile: new CreateProfileUseCase({
-				profileRepository: deps.profileRepository,
-				domainEvents,
-			}),
-			updateProfile: new UpdateProfileUseCase({
-				profileRepository: deps.profileRepository,
-				domainEvents,
-			}),
+			createProfile: createProfileUseCase,
+			updateProfile: updateProfileUseCase,
 		},
 	}
 }

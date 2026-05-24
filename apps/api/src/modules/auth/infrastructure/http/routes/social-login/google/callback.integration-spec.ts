@@ -28,6 +28,9 @@ import {
 	user as userTable,
 } from '@/modules/auth/infrastructure/database/schemas'
 import { FakeOAuthProviderAdapter } from '@/modules/auth/test/fake-oauth-provider-adapter'
+import { DrizzleProfileRepository } from '@/modules/profile/infrastructure/database/repositories/profile-repository'
+import { profile as profileTable } from '@/modules/profile/infrastructure/database/schemas'
+import { buildProfileModule } from '@/modules/profile/profile-module'
 import {
 	initializeClock,
 	__resetClockForTests,
@@ -91,6 +94,11 @@ describe('GET /social-login/google/callback (integration)', () => {
 		const userRepository = new DrizzleUserRepository(db)
 		const oauthAccountRepository = new DrizzleOAuthAccountRepository(db)
 		const refreshTokenRepository = new DrizzleRefreshTokenRepository(db)
+		const profileRepository = new DrizzleProfileRepository(db)
+
+		const integrationBus = new IntegrationEventBus()
+
+		buildProfileModule({ integrationBus, profileRepository })
 
 		const socialLoginUseCase = new SocialLoginUseCase({
 			userRepository,
@@ -99,7 +107,7 @@ describe('GET /social-login/google/callback (integration)', () => {
 			jwtService: new FakeJwtService(),
 			tokenGenerator: new FakeJwtTokenGenerator(),
 			domainEvents: new DomainEventDispatcher(),
-			integrationBus: new IntegrationEventBus(),
+			integrationBus,
 		})
 
 		app = createApp()
@@ -156,7 +164,6 @@ describe('GET /social-login/google/callback (integration)', () => {
 		expect(users).toHaveLength(1)
 		expect(users[0]).toMatchObject({
 			email: FAKE_PROFILE.email,
-			name: FAKE_PROFILE.name,
 			roles: ['donor'],
 		})
 
@@ -170,6 +177,14 @@ describe('GET /social-login/google/callback (integration)', () => {
 
 		const remainingStates = await db.select().from(oauthState)
 		expect(remainingStates).toHaveLength(0)
+
+		const profiles = await db.select().from(profileTable)
+		expect(profiles).toHaveLength(1)
+		expect(profiles[0]).toMatchObject({
+			userId: users[0].id,
+			name: FAKE_PROFILE.name,
+			phone: null,
+		})
 	})
 
 	it('redireciona com new=false quando o usuário já existe', async () => {
@@ -178,8 +193,6 @@ describe('GET /social-login/google/callback (integration)', () => {
 		await db.insert(userTable).values({
 			id: 'existing-user-1',
 			email: FAKE_PROFILE.email,
-			name: 'Pre Existing',
-			phone: null,
 			roles: ['donor'],
 			revokedAt: null,
 		})
@@ -203,6 +216,9 @@ describe('GET /social-login/google/callback (integration)', () => {
 		const users = await db.select().from(userTable)
 		expect(users).toHaveLength(1)
 		expect(users[0].id).toBe('existing-user-1')
+
+		const profiles = await db.select().from(profileTable)
+		expect(profiles).toHaveLength(0)
 	})
 
 	it('responde 400 JSON quando o state não existe no DB', async () => {
