@@ -5,6 +5,8 @@ import { ProfileAlreadyExistsError } from './application/@errors/profile-already
 import { ProfileRepository } from './application/repositories/profile-repository'
 import { CreateProfileUseCase } from './application/use-cases/create-profile-use-case'
 import { UpdateProfileUseCase } from './application/use-cases/update-profile-use-case'
+import { ProfileSummaryQueryFromRepo } from './infrastructure/queries/profile-summary-query-from-repo'
+import type { ProfileSummaryQuery } from './public/queries/profile-summary-query'
 
 export type ProfileModuleDependencies = {
 	integrationBus: IntegrationEventBus
@@ -13,6 +15,9 @@ export type ProfileModuleDependencies = {
 
 export type ProfileModule = {
 	domainEvents: DomainEventDispatcher
+	queries: {
+		profileSummary: ProfileSummaryQuery
+	}
 	useCases: {
 		createProfile: CreateProfileUseCase
 		updateProfile: UpdateProfileUseCase
@@ -63,11 +68,18 @@ export function buildProfileModule(
 		domainEvents,
 	})
 
+	const profileSummaryQuery = new ProfileSummaryQueryFromRepo(
+		deps.profileRepository
+	)
+
 	registerDomainHandlers(domainEvents, deps)
 	registerIntegrationSubscribers(deps, { createProfileUseCase })
 
 	return {
 		domainEvents,
+		queries: {
+			profileSummary: profileSummaryQuery,
+		},
 		useCases: {
 			createProfile: createProfileUseCase,
 			updateProfile: updateProfileUseCase,
