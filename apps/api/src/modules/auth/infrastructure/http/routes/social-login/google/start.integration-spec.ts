@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import {
 	afterAll,
@@ -22,6 +23,8 @@ import {
 	__resetIdGeneratorForTests,
 	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
+import type { DrizzleTx } from '@/shared/transaction/db-context'
+import { DrizzleTransactionService } from '@/shared/transaction/drizzle-transaction-service'
 import { resetDb } from '@/test/reset-db'
 import { GoogleSocialLoginStartRoute } from './start'
 
@@ -34,6 +37,10 @@ describe('POST /social-login/google/start (integration)', () => {
 		initializeIdGenerator('v7')
 
 		db = createDrizzle(inject('databaseUrl'))
+		const txService = new DrizzleTransactionService(
+			db,
+			new AsyncLocalStorage<DrizzleTx>()
+		)
 
 		const fakeAdapter = new FakeOAuthProviderAdapter(
 			'google',
@@ -49,7 +56,7 @@ describe('POST /social-login/google/start (integration)', () => {
 			}
 		)
 		const oauthProviderService = new OAuthProviderService([fakeAdapter])
-		const oauthStateRepository = new DrizzleOAuthStateRepository(db)
+		const oauthStateRepository = new DrizzleOAuthStateRepository(txService)
 
 		app = createApp()
 		await app.register(async instance => {

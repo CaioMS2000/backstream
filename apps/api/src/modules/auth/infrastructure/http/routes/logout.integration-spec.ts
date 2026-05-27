@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import {
 	afterAll,
@@ -23,13 +24,15 @@ import {
 import { AccessTokenVerifier } from '@/modules/auth/public/services/access-token-verifier'
 import type { AuthenticatedUser } from '@/modules/auth/public/types/authenticated-user'
 import {
-	initializeClock,
 	__resetClockForTests,
+	initializeClock,
 } from '@/shared/infrastructure/clock'
 import {
-	initializeIdGenerator,
 	__resetIdGeneratorForTests,
+	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
+import type { DrizzleTx } from '@/shared/transaction/db-context'
+import { DrizzleTransactionService } from '@/shared/transaction/drizzle-transaction-service'
 import { resetDb } from '@/test/reset-db'
 import { LogoutRoute } from './logout'
 
@@ -65,8 +68,12 @@ describe('POST /logout (integration)', () => {
 		initializeIdGenerator('v7')
 
 		db = createDrizzle(inject('databaseUrl'))
+		const txService = new DrizzleTransactionService(
+			db,
+			new AsyncLocalStorage<DrizzleTx>()
+		)
 
-		const refreshTokenRepository = new DrizzleRefreshTokenRepository(db)
+		const refreshTokenRepository = new DrizzleRefreshTokenRepository(txService)
 		const logoutUseCase = new LogoutUseCase({
 			refreshTokenRepository,
 			tokenGenerator: new FakeJwtTokenGenerator(),

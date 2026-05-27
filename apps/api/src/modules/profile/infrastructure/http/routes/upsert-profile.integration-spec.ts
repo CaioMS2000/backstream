@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import {
@@ -28,6 +29,8 @@ import {
 	__resetIdGeneratorForTests,
 	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
+import type { DrizzleTx } from '@/shared/transaction/db-context'
+import { DrizzleTransactionService } from '@/shared/transaction/drizzle-transaction-service'
 import { resetDb } from '@/test/reset-db'
 import { UpsertProfileRoute } from './upsert-profile'
 
@@ -59,8 +62,12 @@ describe('PUT /profile (integration)', () => {
 		initializeIdGenerator('v7')
 
 		db = createDrizzle(inject('databaseUrl'))
+		const txService = new DrizzleTransactionService(
+			db,
+			new AsyncLocalStorage<DrizzleTx>()
+		)
 
-		const profileRepository = new DrizzleProfileRepository(db)
+		const profileRepository = new DrizzleProfileRepository(txService)
 		const domainEvents = new DomainEventDispatcher()
 
 		const createProfileUseCase = new CreateProfileUseCase({

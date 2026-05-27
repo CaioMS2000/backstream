@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import type { JWTPayload } from 'jose'
 import {
@@ -11,9 +12,9 @@ import {
 } from 'vitest'
 import { createApp, type HttpApp } from '@/http/app'
 import { createDrizzle, type DrizzleClient } from '@/lib/drizzle'
+import { HashVerifier } from '@/modules/auth/application/cryptography/hash-verifier'
 import { JwtService, JwtTokenGenerator } from '@/modules/auth/application/jwt'
 import { LoginUseCase } from '@/modules/auth/application/use-cases/login-use-case'
-import { HashVerifier } from '@/modules/auth/application/cryptography/hash-verifier'
 import { DrizzlePasswordCredentialRepository } from '@/modules/auth/infrastructure/database/repositories/password-credential-repository'
 import { DrizzleRefreshTokenRepository } from '@/modules/auth/infrastructure/database/repositories/refresh-token-repository'
 import { DrizzleUserRepository } from '@/modules/auth/infrastructure/database/repositories/user-repository'
@@ -23,13 +24,15 @@ import {
 	user as userTable,
 } from '@/modules/auth/infrastructure/database/schemas'
 import {
-	initializeClock,
 	__resetClockForTests,
+	initializeClock,
 } from '@/shared/infrastructure/clock'
 import {
-	initializeIdGenerator,
 	__resetIdGeneratorForTests,
+	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
+import type { DrizzleTx } from '@/shared/transaction/db-context'
+import { DrizzleTransactionService } from '@/shared/transaction/drizzle-transaction-service'
 import { resetDb } from '@/test/reset-db'
 import { LoginRoute } from './login'
 
@@ -75,11 +78,15 @@ describe('POST /login (integration)', () => {
 		initializeIdGenerator('v7')
 
 		db = createDrizzle(inject('databaseUrl'))
+		const txService = new DrizzleTransactionService(
+			db,
+			new AsyncLocalStorage<DrizzleTx>()
+		)
 
-		const userRepository = new DrizzleUserRepository(db)
+		const userRepository = new DrizzleUserRepository(txService)
 		const passwordCredentialRepository =
-			new DrizzlePasswordCredentialRepository(db)
-		const refreshTokenRepository = new DrizzleRefreshTokenRepository(db)
+			new DrizzlePasswordCredentialRepository(txService)
+		const refreshTokenRepository = new DrizzleRefreshTokenRepository(txService)
 
 		const loginUseCase = new LoginUseCase({
 			userRepository,

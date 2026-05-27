@@ -1,23 +1,23 @@
 import { UniqueId } from '@backstream/core/unique-id'
 import { and, eq, isNull } from 'drizzle-orm'
-import type { DrizzleClient } from '@/lib/drizzle'
 import { RefreshTokenRepository } from '@/modules/auth/application/repositories/refresh-token-repository'
 import { RefreshToken } from '@/modules/auth/domain/refresh-token'
+import { DbContext } from '@/shared/transaction/db-context'
 import { RefreshTokenMapper } from '../mappers/refresh-tokne-mapper'
 import { refreshToken } from '../schemas'
 
 export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
-	constructor(private db: DrizzleClient) {
+	constructor(private dbContext: DbContext) {
 		super()
 	}
 
 	async save(token: RefreshToken): Promise<void> {
 		const newRecord = RefreshTokenMapper.toPersistence(token)
-		await this.db.insert(refreshToken).values(newRecord)
+		await this.dbContext.current().insert(refreshToken).values(newRecord)
 	}
 
 	async findByTokenHash(tokenHash: string): Promise<RefreshToken | null> {
-		const record = await this.db.query.refreshToken.findFirst({
+		const record = await this.dbContext.current().query.refreshToken.findFirst({
 			where: (table, { eq }) => eq(table.value, tokenHash),
 		})
 
@@ -27,7 +27,8 @@ export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
 	}
 
 	async revoke(tokenHash: string): Promise<void> {
-		const _result = await this.db
+		const _result = await this.dbContext
+			.current()
 			.update(refreshToken)
 			.set({ revokedAt: new Date() })
 			.where(
@@ -37,7 +38,8 @@ export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
 	}
 
 	async revokeAllForUser(userId: UniqueId): Promise<void> {
-		await this.db
+		await this.dbContext
+			.current()
 			.update(refreshToken)
 			.set({ revokedAt: new Date() })
 			.where(
@@ -46,7 +48,8 @@ export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
 	}
 
 	async markUsed(tokenHash: string): Promise<boolean> {
-		const result = await this.db
+		const result = await this.dbContext
+			.current()
 			.update(refreshToken)
 			.set({ usedAt: new Date() })
 			.where(

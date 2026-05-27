@@ -1,19 +1,20 @@
+import { UniqueId } from '@backstream/core'
 import { ProfileRepository } from '@/modules/profile/application/repositories/profile-repository'
 import { Profile } from '@/modules/profile/domain/profile'
-import { UniqueId } from '@backstream/core'
-import type { DrizzleClient } from '@/lib/drizzle'
+import { DbContext } from '@/shared/transaction/db-context'
 import { ProfileMapper } from '../mappers/profile-mapper'
 import { profile as profileSchema } from '../schemas'
 
 export class DrizzleProfileRepository extends ProfileRepository {
-	constructor(private db: DrizzleClient) {
+	constructor(private dbContext: DbContext) {
 		super()
 	}
 
 	async save(profile: Profile): Promise<void> {
 		const record = ProfileMapper.toPersistence(profile)
 
-		await this.db
+		await this.dbContext
+			.current()
 			.insert(profileSchema)
 			.values(record)
 			.onConflictDoUpdate({
@@ -27,7 +28,7 @@ export class DrizzleProfileRepository extends ProfileRepository {
 	}
 
 	async findByUserId(userId: UniqueId): Promise<Profile | null> {
-		const record = await this.db.query.profile.findFirst({
+		const record = await this.dbContext.current().query.profile.findFirst({
 			where: (profile, { eq }) => eq(profile.userId, userId),
 		})
 
@@ -37,7 +38,7 @@ export class DrizzleProfileRepository extends ProfileRepository {
 	}
 
 	async findByPhone(phone: string): Promise<Profile | null> {
-		const record = await this.db.query.profile.findFirst({
+		const record = await this.dbContext.current().query.profile.findFirst({
 			where: (profile, { eq }) => eq(profile.phone, phone),
 		})
 

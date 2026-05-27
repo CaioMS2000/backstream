@@ -1,17 +1,17 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import type { DrizzleClient } from '@/lib/drizzle'
 import { PasswordCredentialRepository } from '@/modules/auth/application/repositories/password-credential-repository'
 import { PasswordCredential } from '@/modules/auth/domain/password-credential'
+import { DbContext } from '@/shared/transaction/db-context'
 import { PasswordCredentialMapper } from '../mappers/password-credential-mapper'
 import { passwordCredential } from '../schemas'
 
 export class DrizzlePasswordCredentialRepository extends PasswordCredentialRepository {
-	constructor(private db: DrizzleClient) {
+	constructor(private dbContext: DbContext) {
 		super()
 	}
 
 	async save(credential: PasswordCredential): Promise<void> {
-		await this.db.insert(passwordCredential).values({
+		await this.dbContext.current().insert(passwordCredential).values({
 			id: credential.id,
 			userId: credential.userId,
 			passwordHash: credential.hash,
@@ -21,9 +21,11 @@ export class DrizzlePasswordCredentialRepository extends PasswordCredentialRepos
 	}
 
 	async findByUserId(userId: UniqueId): Promise<PasswordCredential | null> {
-		const record = await this.db.query.passwordCredential.findFirst({
-			where: (table, { eq }) => eq(table.userId, userId),
-		})
+		const record = await this.dbContext
+			.current()
+			.query.passwordCredential.findFirst({
+				where: (table, { eq }) => eq(table.userId, userId),
+			})
 
 		if (!record) return null
 

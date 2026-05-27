@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import {
 	afterAll,
@@ -14,18 +15,20 @@ import { makeAuthGuard } from '@/http/middleware/auth/authed'
 import { createDrizzle, type DrizzleClient } from '@/lib/drizzle'
 import type { Role } from '@/modules/auth/domain/role'
 import { DrizzleUserRepository } from '@/modules/auth/infrastructure/database/repositories/user-repository'
-import { UserSummaryQueryFromRepo } from '@/modules/auth/infrastructure/queries/user-summary-query-from-repo'
 import { user as userTable } from '@/modules/auth/infrastructure/database/schemas'
+import { UserSummaryQueryFromRepo } from '@/modules/auth/infrastructure/queries/user-summary-query-from-repo'
 import { AccessTokenVerifier } from '@/modules/auth/public/services/access-token-verifier'
 import type { AuthenticatedUser } from '@/modules/auth/public/types/authenticated-user'
 import {
-	initializeClock,
 	__resetClockForTests,
+	initializeClock,
 } from '@/shared/infrastructure/clock'
 import {
-	initializeIdGenerator,
 	__resetIdGeneratorForTests,
+	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
+import type { DrizzleTx } from '@/shared/transaction/db-context'
+import { DrizzleTransactionService } from '@/shared/transaction/drizzle-transaction-service'
 import { resetDb } from '@/test/reset-db'
 import { MeRoute } from './me'
 
@@ -52,8 +55,12 @@ describe('GET /me (integration)', () => {
 		initializeIdGenerator('v7')
 
 		db = createDrizzle(inject('databaseUrl'))
+		const txService = new DrizzleTransactionService(
+			db,
+			new AsyncLocalStorage<DrizzleTx>()
+		)
 
-		const userRepository = new DrizzleUserRepository(db)
+		const userRepository = new DrizzleUserRepository(txService)
 		const userSummaryQuery = new UserSummaryQueryFromRepo(userRepository)
 		const authed = makeAuthed(makeAuthGuard(new FakeAccessTokenVerifier()))
 

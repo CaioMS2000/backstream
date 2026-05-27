@@ -2,14 +2,14 @@ import {
 	OAuthStateData,
 	OAuthStateRepository,
 } from '@/modules/auth/application/repositories/oauth-state-repository'
-import type { DrizzleClient } from '@/lib/drizzle'
+import { DbContext } from '@/shared/transaction/db-context'
 import { generateId } from '@/shared/infrastructure/id-generator'
 import { oauthState } from '../schemas'
 import { eq } from 'drizzle-orm'
 import { OauthStateMapper } from '../mappers/oauth-state-mapper'
 
 export class DrizzleOAuthStateRepository extends OAuthStateRepository {
-	constructor(private db: DrizzleClient) {
+	constructor(private dbContext: DbContext) {
 		super()
 	}
 
@@ -18,24 +18,29 @@ export class DrizzleOAuthStateRepository extends OAuthStateRepository {
 		data: OAuthStateData,
 		expiresInSeconds: number
 	): Promise<void> {
-		await this.db.insert(oauthState).values({
-			id: await generateId(),
-			codeVerifier: data.codeVerifier,
-			provider: data.provider,
-			state,
-			roles: [data.role],
-			expiresInSeconds: expiresInSeconds,
-		})
+		await this.dbContext
+			.current()
+			.insert(oauthState)
+			.values({
+				id: await generateId(),
+				codeVerifier: data.codeVerifier,
+				provider: data.provider,
+				state,
+				roles: [data.role],
+				expiresInSeconds: expiresInSeconds,
+			})
 	}
 
 	async findAndDelete(state: string): Promise<OAuthStateData | null> {
-		const record = await this.db.query.oauthState.findFirst({
+		const db = this.dbContext.current()
+
+		const record = await db.query.oauthState.findFirst({
 			where: (table, { eq }) => eq(table.state, state),
 		})
 
 		if (!record) return null
 
-		await this.db.delete(oauthState).where(eq(oauthState.state, state))
+		await db.delete(oauthState).where(eq(oauthState.state, state))
 
 		return OauthStateMapper.toDomain(record)
 	}

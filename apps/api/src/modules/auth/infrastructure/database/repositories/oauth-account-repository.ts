@@ -1,15 +1,15 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import type { DrizzleClient } from '@/lib/drizzle'
 import {
 	OAuthAccountRecord,
 	OAuthAccountRepository,
 } from '@/modules/auth/application/repositories/oauth-account-repository'
+import { DbContext } from '@/shared/transaction/db-context'
 import { generateId } from '@/shared/infrastructure/id-generator'
 import { oauthAccount } from '../schemas'
 import { OauthAccountMapper } from '../mappers/oauth-account-mapper'
 
 export class DrizzleOAuthAccountRepository extends OAuthAccountRepository {
-	constructor(private db: DrizzleClient) {
+	constructor(private dbContext: DbContext) {
 		super()
 	}
 
@@ -17,7 +17,7 @@ export class DrizzleOAuthAccountRepository extends OAuthAccountRepository {
 		provider: string,
 		providerAccountId: string
 	): Promise<OAuthAccountRecord | null> {
-		const record = await this.db.query.oauthAccount.findFirst({
+		const record = await this.dbContext.current().query.oauthAccount.findFirst({
 			where: (table, { eq, and }) =>
 				and(
 					eq(table.provider, provider),
@@ -35,7 +35,8 @@ export class DrizzleOAuthAccountRepository extends OAuthAccountRepository {
 		provider: string
 		providerAccountId: string
 	}): Promise<{ id: string }> {
-		const [record] = await this.db
+		const [record] = await this.dbContext
+			.current()
 			.insert(oauthAccount)
 			.values({
 				userId: data.userId,

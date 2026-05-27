@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
 import { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
 import { ArcticFetchError, OAuth2RequestError } from 'arctic'
@@ -32,13 +33,15 @@ import { DrizzleProfileRepository } from '@/modules/profile/infrastructure/datab
 import { profile as profileTable } from '@/modules/profile/infrastructure/database/schemas'
 import { buildProfileModule } from '@/modules/profile/profile-module'
 import {
-	initializeClock,
 	__resetClockForTests,
+	initializeClock,
 } from '@/shared/infrastructure/clock'
 import {
-	initializeIdGenerator,
 	__resetIdGeneratorForTests,
+	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
+import type { DrizzleTx } from '@/shared/transaction/db-context'
+import { DrizzleTransactionService } from '@/shared/transaction/drizzle-transaction-service'
 import { resetDb } from '@/test/reset-db'
 import { GoogleSocialLoginCallbackRoute } from './callback'
 
@@ -86,15 +89,19 @@ describe('GET /social-login/google/callback (integration)', () => {
 		initializeIdGenerator('v7')
 
 		db = createDrizzle(inject('databaseUrl'))
+		const txService = new DrizzleTransactionService(
+			db,
+			new AsyncLocalStorage<DrizzleTx>()
+		)
 
 		fakeAdapter = new FakeOAuthProviderAdapter('google', FAKE_PROFILE)
 		const oauthProviderService = new OAuthProviderService([fakeAdapter])
 
-		oauthStateRepository = new DrizzleOAuthStateRepository(db)
-		const userRepository = new DrizzleUserRepository(db)
-		const oauthAccountRepository = new DrizzleOAuthAccountRepository(db)
-		const refreshTokenRepository = new DrizzleRefreshTokenRepository(db)
-		const profileRepository = new DrizzleProfileRepository(db)
+		oauthStateRepository = new DrizzleOAuthStateRepository(txService)
+		const userRepository = new DrizzleUserRepository(txService)
+		const oauthAccountRepository = new DrizzleOAuthAccountRepository(txService)
+		const refreshTokenRepository = new DrizzleRefreshTokenRepository(txService)
+		const profileRepository = new DrizzleProfileRepository(txService)
 
 		const integrationBus = new IntegrationEventBus()
 

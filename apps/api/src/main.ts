@@ -1,6 +1,8 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { initializeClock } from '@/shared/infrastructure/clock'
 import { initializeIdGenerator } from '@/shared/infrastructure/id-generator'
+import type { DrizzleTx } from '@/shared/transaction/db-context'
 
 async function bootstrap() {
 	// 1. Config primeiro — valida env, falha cedo se algo faltar
@@ -13,6 +15,9 @@ async function bootstrap() {
 	// 3. Imports dinâmicos (após env validado)
 	const { createApp } = await import('@/http/app')
 	const { createDrizzle } = await import('@/lib/drizzle')
+	const { DrizzleTransactionService } = await import(
+		'@/shared/transaction/drizzle-transaction-service'
+	)
 	const { IntegrationEventBus } = await import(
 		'@backstream/core/events/integration-event-bus'
 	)
@@ -63,6 +68,10 @@ async function bootstrap() {
 	const db = createDrizzle(env.DATABASE_URL)
 
 	// 4. Infra compartilhada
+	const txService = new DrizzleTransactionService(
+		db,
+		new AsyncLocalStorage<DrizzleTx>()
+	)
 	const integrationBus = new IntegrationEventBus()
 	const tokenService = new TokenService()
 	const passwordService = new PasswordService()
@@ -75,14 +84,14 @@ async function bootstrap() {
 	])
 
 	// 5. Repos drizzle
-	const userRepository = new DrizzleUserRepository(db)
+	const userRepository = new DrizzleUserRepository(txService)
 	const passwordCredentialRepository = new DrizzlePasswordCredentialRepository(
-		db
+		txService
 	)
-	const oauthAccountRepository = new DrizzleOAuthAccountRepository(db)
-	const oauthStateRepository = new DrizzleOAuthStateRepository(db)
-	const refreshTokenRepository = new DrizzleRefreshTokenRepository(db)
-	const profileRepository = new DrizzleProfileRepository(db)
+	const oauthAccountRepository = new DrizzleOAuthAccountRepository(txService)
+	const oauthStateRepository = new DrizzleOAuthStateRepository(txService)
+	const refreshTokenRepository = new DrizzleRefreshTokenRepository(txService)
+	const profileRepository = new DrizzleProfileRepository(txService)
 
 	// 6. Módulos (puros — domínio + use cases)
 	const authModule = buildAuthModule({
