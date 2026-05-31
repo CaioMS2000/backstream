@@ -1,15 +1,11 @@
 import { failure, Result, success } from '@backstream/core/result'
 import { Email } from '@/shared/domain'
-import { now } from '@/shared/infrastructure/clock'
-import { RefreshToken } from '../../domain/refresh-token'
 import { AuthenticatedUser } from '../../public/types/authenticated-user'
 import { InvalidCredentialsError } from '../@errors'
-import { REFRESH_TOKEN_EXPIRY_SECONDS } from '../constants'
 import { HashVerifier } from '../cryptography/hash-verifier'
-import { JwtService, JwtTokenGenerator } from '../jwt'
 import { PasswordCredentialRepository } from '../repositories/password-credential-repository'
-import { RefreshTokenRepository } from '../repositories/refresh-token-repository'
 import { UserRepository } from '../repositories/user-repository'
+import { TokenIssuer } from '../services/token-issuer'
 
 export type LoginUseCaseRequest = {
 	email: string
@@ -27,11 +23,9 @@ export type LoginUseCaseResponse = Result<
 
 type UseCaseProps = {
 	hashVerifier: HashVerifier
-	jwtService: JwtService
-	tokenGenerator: JwtTokenGenerator
-	refreshTokenRepository: RefreshTokenRepository
 	userRepository: UserRepository
 	passwordCredentialRepository: PasswordCredentialRepository
+	tokenIssuer: TokenIssuer
 }
 
 export class LoginUseCase {
@@ -62,32 +56,19 @@ export class LoginUseCase {
 			return failure(InvalidCredentialsError)
 		}
 
-		const accessToken = await this.props.jwtService.signAccessToken({
-			sub: user.id,
+		const authenticatedUser: AuthenticatedUser = {
+			userId: user.id,
 			email: user.email.value,
 			roles: user.roles,
-		})
-		const refreshTokenValue =
-			await this.props.tokenGenerator.generateRefreshToken()
-		const refreshTokenHash =
-			await this.props.tokenGenerator.hashRefreshToken(refreshTokenValue)
-		const refreshToken = await RefreshToken.issue(
-			user.id,
-			refreshTokenHash,
-			now(),
-			REFRESH_TOKEN_EXPIRY_SECONDS
-		)
+		}
 
-		await this.props.refreshTokenRepository.save(refreshToken)
+		const { accessToken, refreshToken } =
+			await this.props.tokenIssuer.issue(authenticatedUser)
 
 		return success({
 			accessToken,
-			refreshToken: refreshTokenValue,
-			user: {
-				userId: user.id,
-				email: user.email.value,
-				roles: user.roles,
-			},
+			refreshToken,
+			user: authenticatedUser,
 		})
 	}
 }

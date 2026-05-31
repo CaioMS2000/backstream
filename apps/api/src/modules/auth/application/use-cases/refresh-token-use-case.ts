@@ -1,13 +1,10 @@
 import { failure, Result, success } from '@backstream/core/result'
-import type { RefreshTokenRepository } from '../repositories/refresh-token-repository'
-import type { JwtService } from '../jwt'
-import type { JwtTokenGenerator } from '../jwt'
 import { InvalidRefreshTokenError } from '../@errors/invalid-refresh-token-error'
 import { TokenReplayDetectedError } from '../@errors/token-replay-detected-error'
-import { REFRESH_TOKEN_EXPIRY_SECONDS } from '../constants'
+import type { JwtTokenGenerator } from '../jwt'
+import type { RefreshTokenRepository } from '../repositories/refresh-token-repository'
 import { UserRepository } from '../repositories/user-repository'
-import { RefreshToken } from '../../domain/refresh-token'
-import { now } from '@/shared/infrastructure/clock'
+import { TokenIssuer } from '../services/token-issuer'
 
 export type RefreshTokenUseCaseRequest = {
 	refreshToken: string
@@ -24,8 +21,8 @@ export type RefreshTokenUseCaseResponse = Result<
 type UseCaseProps = {
 	refreshTokenRepository: RefreshTokenRepository
 	userRepository: UserRepository
-	jwtService: JwtService
 	tokenGenerator: JwtTokenGenerator
+	tokenIssuer: TokenIssuer
 }
 
 export class RefreshTokenUseCase {
@@ -59,31 +56,17 @@ export class RefreshTokenUseCase {
 			return failure(InvalidRefreshTokenError)
 		}
 
-		const accessToken = await this.props.jwtService.signAccessToken({
-			sub: user.id,
+		const { accessToken, refreshToken } = await this.props.tokenIssuer.issue({
+			userId: user.id,
 			email: user.email.value,
 			roles: user.roles,
 		})
-
-		const newRefreshToken =
-			await this.props.tokenGenerator.generateRefreshToken()
-		const newRefreshTokenHash =
-			await this.props.tokenGenerator.hashRefreshToken(newRefreshToken)
-
-		await this.props.refreshTokenRepository.save(
-			await RefreshToken.issue(
-				user.id,
-				newRefreshTokenHash,
-				now(),
-				REFRESH_TOKEN_EXPIRY_SECONDS
-			)
-		)
 
 		await this.props.refreshTokenRepository.revoke(tokenHash)
 
 		return success({
 			accessToken,
-			refreshToken: newRefreshToken,
+			refreshToken,
 		})
 	}
 }

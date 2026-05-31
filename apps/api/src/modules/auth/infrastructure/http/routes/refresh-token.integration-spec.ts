@@ -13,6 +13,7 @@ import {
 import { createApp, type HttpApp } from '@/http/app'
 import { createDrizzle, type DrizzleClient } from '@/lib/drizzle'
 import { JwtService, JwtTokenGenerator } from '@/modules/auth/application/jwt'
+import { TokenIssuer } from '@/modules/auth/application/services/token-issuer'
 import { RefreshTokenUseCase } from '@/modules/auth/application/use-cases/refresh-token-use-case'
 import { DrizzleRefreshTokenRepository } from '@/modules/auth/infrastructure/database/repositories/refresh-token-repository'
 import { DrizzleUserRepository } from '@/modules/auth/infrastructure/database/repositories/user-repository'
@@ -80,11 +81,17 @@ describe('POST /refreshToken (integration)', () => {
 		const userRepository = new DrizzleUserRepository(txService)
 		const refreshTokenRepository = new DrizzleRefreshTokenRepository(txService)
 
+		const tokenIssuer = new TokenIssuer({
+			jwtService: new FakeJwtService(),
+			tokenGenerator: new FakeJwtTokenGenerator(),
+			refreshTokenRepository,
+		})
+
 		const refreshTokenUseCase = new RefreshTokenUseCase({
 			refreshTokenRepository,
 			userRepository,
-			jwtService: new FakeJwtService(),
 			tokenGenerator: new FakeJwtTokenGenerator(),
+			tokenIssuer,
 		})
 
 		app = createApp()

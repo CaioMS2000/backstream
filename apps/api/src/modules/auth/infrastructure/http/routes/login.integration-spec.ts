@@ -14,6 +14,7 @@ import { createApp, type HttpApp } from '@/http/app'
 import { createDrizzle, type DrizzleClient } from '@/lib/drizzle'
 import { HashVerifier } from '@/modules/auth/application/cryptography/hash-verifier'
 import { JwtService, JwtTokenGenerator } from '@/modules/auth/application/jwt'
+import { TokenIssuer } from '@/modules/auth/application/services/token-issuer'
 import { LoginUseCase } from '@/modules/auth/application/use-cases/login-use-case'
 import { DrizzlePasswordCredentialRepository } from '@/modules/auth/infrastructure/database/repositories/password-credential-repository'
 import { DrizzleRefreshTokenRepository } from '@/modules/auth/infrastructure/database/repositories/refresh-token-repository'
@@ -88,13 +89,17 @@ describe('POST /login (integration)', () => {
 			new DrizzlePasswordCredentialRepository(txService)
 		const refreshTokenRepository = new DrizzleRefreshTokenRepository(txService)
 
+		const tokenIssuer = new TokenIssuer({
+			jwtService: new FakeJwtService(),
+			tokenGenerator: new FakeJwtTokenGenerator(),
+			refreshTokenRepository,
+		})
+
 		const loginUseCase = new LoginUseCase({
 			userRepository,
 			passwordCredentialRepository,
-			refreshTokenRepository,
 			hashVerifier: new FakeHashVerifier(),
-			jwtService: new FakeJwtService(),
-			tokenGenerator: new FakeJwtTokenGenerator(),
+			tokenIssuer,
 		})
 
 		app = createApp()
