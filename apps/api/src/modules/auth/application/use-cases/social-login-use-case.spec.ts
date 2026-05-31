@@ -1,6 +1,5 @@
 import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
 import { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
-import type { JWTPayload } from 'jose'
 import {
 	afterEach,
 	beforeEach,
@@ -11,7 +10,6 @@ import {
 	vi,
 } from 'vitest'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
-import { Email } from '@/shared/domain'
 import {
 	__resetClockForTests,
 	initializeClock,
@@ -20,42 +18,15 @@ import {
 	__resetIdGeneratorForTests,
 	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
-import { User } from '../../domain/user'
 import { SocialUserRegistered } from '../../public/events/social-user-registered'
 import { UserRegistered } from '../../public/events/user-registered'
+import { FakeJwtService } from '../../test/fake-jwt-service'
+import { FakeJwtTokenGenerator } from '../../test/fake-jwt-token-generator'
 import { InMemoryOAuthAccountRepository } from '../../test/in-memory-oauth-account-repository'
 import { InMemoryRefreshTokenRepository } from '../../test/in-memory-refresh-token-repository'
 import { InMemoryUserRepository } from '../../test/in-memory-user-repository'
-import { JwtService } from '../jwt/jwt-service'
-import { JwtTokenGenerator } from '../jwt/jwt-token-generator'
+import { seedUser } from '../../test/seed-user'
 import { SocialLoginUseCase } from './social-login-use-case'
-
-class FakeJwtService extends JwtService {
-	async sign(): Promise<string> {
-		return 'fake-access-token'
-	}
-	async verify<T extends JWTPayload = JWTPayload>(): Promise<T> {
-		return {} as T
-	}
-	async decode<T extends JWTPayload = JWTPayload>(): Promise<T> {
-		return {} as T
-	}
-	async signAccessToken(): Promise<string> {
-		return 'fake-access-token'
-	}
-	async verifyAccessToken(): Promise<JWTPayload | null> {
-		return null
-	}
-}
-
-class FakeJwtTokenGenerator extends JwtTokenGenerator {
-	async generateRefreshToken(): Promise<string> {
-		return 'fake-refresh-token'
-	}
-	async hashRefreshToken(): Promise<string> {
-		return 'fake-refresh-token-hash'
-	}
-}
 
 describe('SocialLoginUseCase', () => {
 	let userRepo: InMemoryUserRepository
@@ -112,25 +83,8 @@ describe('SocialLoginUseCase', () => {
 		__resetIdGeneratorForTests()
 	})
 
-	async function seedUser(opts: {
-		email: string
-		roles: ('streamer' | 'donor')[]
-	}): Promise<User> {
-		const emailResult = Email.create(opts.email)
-		if (emailResult.isFailure()) {
-			throw new Error(`seed inválido: ${emailResult.value.message}`)
-		}
-		const user = await User.create({
-			email: emailResult.value,
-			roles: opts.roles,
-			now: new Date(),
-		})
-		userRepo.items.push(user)
-		return user
-	}
-
 	it('deve logar usuário existente quando o provider já está vinculado', async () => {
-		const user = await seedUser({
+		const user = await seedUser(userRepo, {
 			email: baseInput.email,
 			roles: ['donor'],
 		})
@@ -156,7 +110,7 @@ describe('SocialLoginUseCase', () => {
 	})
 
 	it('deve auto-vincular e logar quando já existe usuário com mesmo e-mail', async () => {
-		const user = await seedUser({
+		const user = await seedUser(userRepo, {
 			email: baseInput.email,
 			roles: ['streamer'],
 		})
@@ -234,7 +188,7 @@ describe('SocialLoginUseCase', () => {
 	})
 
 	it('não deve publicar UserRegistered nem SocialUserRegistered quando logando usuário existente', async () => {
-		const user = await seedUser({
+		const user = await seedUser(userRepo, {
 			email: baseInput.email,
 			roles: ['donor'],
 		})
@@ -251,7 +205,7 @@ describe('SocialLoginUseCase', () => {
 	})
 
 	it('não deve publicar SocialUserRegistered em auto-link por email', async () => {
-		await seedUser({
+		await seedUser(userRepo, {
 			email: baseInput.email,
 			roles: ['streamer'],
 		})

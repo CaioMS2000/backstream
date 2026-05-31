@@ -20,17 +20,11 @@ import {
 } from '@/shared/infrastructure/id-generator'
 import { UserCreated } from '../../domain/events/user-created'
 import { UserRegistered } from '../../public/events/user-registered'
+import { FakeHashGenerator } from '../../test/fake-hash-generator'
 import { InMemoryPasswordCredentialRepository } from '../../test/in-memory-password-credential-repository'
 import { InMemoryUserRepository } from '../../test/in-memory-user-repository'
 import { EmailAlreadyRegisteredError } from '../@errors'
-import { HashGenerator } from '../cryptography/hash-generator'
 import { RegisterUseCase } from './register-use-case'
-
-class FakeHashGenerator extends HashGenerator {
-	async hash(plain: string): Promise<string> {
-		return `hashed:${plain}`
-	}
-}
 
 describe('RegisterUseCase', () => {
 	let userRepo: InMemoryUserRepository

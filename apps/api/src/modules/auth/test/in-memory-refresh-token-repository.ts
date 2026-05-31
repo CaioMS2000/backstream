@@ -1,7 +1,7 @@
 import { UniqueId } from '@backstream/core/unique-id'
+import { now } from '@/shared/infrastructure/clock'
 import { RefreshTokenRepository } from '../application/repositories/refresh-token-repository'
 import { RefreshToken } from '../domain/refresh-token'
-import { now } from '@/shared/infrastructure/clock'
 
 export class InMemoryRefreshTokenRepository extends RefreshTokenRepository {
 	public items: RefreshToken[] = []
