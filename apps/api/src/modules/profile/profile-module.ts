@@ -7,6 +7,8 @@ import { CreateProfileUseCase } from './application/use-cases/create-profile-use
 import { UpdateProfileUseCase } from './application/use-cases/update-profile-use-case'
 import { ProfileSummaryQueryFromRepo } from './infrastructure/queries/profile-summary-query-from-repo'
 import type { ProfileSummaryQuery } from './public/queries/profile-summary-query'
+import { CreateProfileCommand } from './public/commands/create-profile-command'
+import { CreateProfileCommandImpl } from './application/commands/create-profile-command'
 
 export type ProfileModuleDependencies = {
 	integrationBus: IntegrationEventBus
@@ -17,6 +19,9 @@ export type ProfileModule = {
 	domainEvents: DomainEventDispatcher
 	queries: {
 		profileSummary: ProfileSummaryQuery
+	}
+	commands: {
+		createProfile: CreateProfileCommand
 	}
 	useCases: {
 		createProfile: CreateProfileUseCase
@@ -71,6 +76,9 @@ export function buildProfileModule(
 	const profileSummaryQuery = new ProfileSummaryQueryFromRepo(
 		deps.profileRepository
 	)
+	const createProfileCommand = new CreateProfileCommandImpl({
+		createProfileUseCase,
+	})
 
 	registerDomainHandlers(domainEvents, deps)
 	registerIntegrationSubscribers(deps, { createProfileUseCase })
@@ -79,6 +87,9 @@ export function buildProfileModule(
 		domainEvents,
 		queries: {
 			profileSummary: profileSummaryQuery,
+		},
+		commands: {
+			createProfile: createProfileCommand,
 		},
 		useCases: {
 			createProfile: createProfileUseCase,
