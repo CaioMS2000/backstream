@@ -25,6 +25,7 @@ export class ProfileSummaryQueryFromRepo extends ProfileSummaryQuery {
 		return {
 			phone,
 			name: profile.name,
+			profileCompleted: profile.isCompleted(),
 		}
 	}
 }

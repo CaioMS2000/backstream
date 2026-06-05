@@ -62,6 +62,10 @@ export class Profile extends AggregateRoot {
 		)
 	}
 
+	isCompleted(): boolean {
+		return !!this.props.phone
+	}
+
 	get name(): string {
 		return this.props.name
 	}
