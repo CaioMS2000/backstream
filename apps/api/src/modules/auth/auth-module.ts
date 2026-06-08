@@ -16,8 +16,6 @@ import { TokenIssuer } from './application/services/token-issuer'
 import { LoginUseCase } from './application/use-cases/login-use-case'
 import { LogoutUseCase } from './application/use-cases/logout-use-case'
 import { RefreshTokenUseCase } from './application/use-cases/refresh-token-use-case'
-import { RegisterUseCase } from './application/use-cases/register-use-case'
-import { SocialLoginUseCase } from './application/use-cases/social-login-use-case'
 import type { Role } from './domain/role'
 import type { OAuthProviderService } from './infrastructure/auth/oauth-provider-service'
 import { UserSummaryQueryFromRepo } from './infrastructure/queries/user-summary-query-from-repo'
@@ -60,8 +58,6 @@ export type AuthModule = {
 		oauthState: OAuthStateRepository
 	}
 	useCases: {
-		register: RegisterUseCase
-		socialLogin: SocialLoginUseCase
 		login: LoginUseCase
 		logout: LogoutUseCase
 		refreshToken: RefreshTokenUseCase
@@ -96,24 +92,6 @@ export function buildAuthModule(deps: AuthModuleDependencies): AuthModule {
 				}
 			}
 		})()
-
-	const register = new RegisterUseCase({
-		userRepository: deps.userRepository,
-		passwordCredentialRepository: deps.passwordCredentialRepository,
-		hashGenerator: deps.hashGenerator,
-		domainEvents,
-		integrationBus: deps.integrationBus,
-	})
-
-	const socialLogin = new SocialLoginUseCase({
-		userRepository: deps.userRepository,
-		oauthAccountRepository: deps.oauthAccountRepository,
-		refreshTokenRepository: deps.refreshTokenRepository,
-		jwtService: deps.jwtService,
-		tokenGenerator: deps.tokenGenerator,
-		domainEvents,
-		integrationBus: deps.integrationBus,
-	})
 
 	const tokenIssuer = new TokenIssuer({
 		jwtService: deps.jwtService,
@@ -178,8 +156,6 @@ export function buildAuthModule(deps: AuthModuleDependencies): AuthModule {
 			oauthState: deps.oauthStateRepository,
 		},
 		useCases: {
-			register,
-			socialLogin,
 			login,
 			logout,
 			refreshToken,

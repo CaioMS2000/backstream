@@ -36,9 +36,9 @@ function registerIntegrationSubscribers(
 	// Intencionalmente vazio. Pontos de extensão futura:
 	//   deps.integrationBus.subscribe(UserRevoked, ...) → desativar Streamer
 	//   deps.integrationBus.subscribe(UserEmailChanged, ...) → invalidar caches
-	// `UserRegistered` não é escutado: onboarding de streamer é explícito via
-	//   OnboardStreamerUseCase (precisa de slug/displayName/pixKey, que não vêm
-	//   no UserRegistered).
+	// `RegistrationCompleted` não é escutado: onboarding de streamer é explícito
+	//   via OnboardStreamerUseCase (precisa de slug/displayName/pixKey, que não
+	//   vêm no evento).
 }
 
 export function buildStreamerModule(

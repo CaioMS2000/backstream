@@ -1,9 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
 import { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
 import { ArcticFetchError, OAuth2RequestError } from 'arctic'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
-import type { JWTPayload } from 'jose'
 import {
 	afterAll,
 	afterEach,
@@ -14,13 +12,15 @@ import {
 	it,
 } from 'vitest'
 import { env } from '@/config'
+import { buildRegistrationFeature } from '@/features/registration/registration-feature'
 import { createApp, type HttpApp } from '@/http/app'
 import { createDrizzle, type DrizzleClient } from '@/lib/drizzle'
-import { JwtService, JwtTokenGenerator } from '@/modules/auth/application/jwt'
-import { SocialLoginUseCase } from '@/modules/auth/application/use-cases/social-login-use-case'
+import { buildAuthModule } from '@/modules/auth/auth-module'
 import { OAuthProviderService } from '@/modules/auth/infrastructure/auth/oauth-provider-service'
+import type { TokenService } from '@/modules/auth/infrastructure/auth/token-service'
 import { DrizzleOAuthAccountRepository } from '@/modules/auth/infrastructure/database/repositories/oauth-account-repository'
 import { DrizzleOAuthStateRepository } from '@/modules/auth/infrastructure/database/repositories/oauth-state-repository'
+import { DrizzlePasswordCredentialRepository } from '@/modules/auth/infrastructure/database/repositories/password-credential-repository'
 import { DrizzleRefreshTokenRepository } from '@/modules/auth/infrastructure/database/repositories/refresh-token-repository'
 import { DrizzleUserRepository } from '@/modules/auth/infrastructure/database/repositories/user-repository'
 import {
@@ -28,6 +28,9 @@ import {
 	oauthState,
 	user as userTable,
 } from '@/modules/auth/infrastructure/database/schemas'
+import { FakeHashGenerator } from '@/modules/auth/test/fake-hash-generator'
+import { FakeJwtService } from '@/modules/auth/test/fake-jwt-service'
+import { FakeJwtTokenGenerator } from '@/modules/auth/test/fake-jwt-token-generator'
 import { FakeOAuthProviderAdapter } from '@/modules/auth/test/fake-oauth-provider-adapter'
 import { DrizzleProfileRepository } from '@/modules/profile/infrastructure/database/repositories/profile-repository'
 import { profile as profileTable } from '@/modules/profile/infrastructure/database/schemas'
@@ -43,34 +46,7 @@ import {
 import type { DrizzleTx } from '@/shared/transaction/db-context'
 import { DrizzleTransactionService } from '@/shared/transaction/drizzle-transaction-service'
 import { resetDb } from '@/test/reset-db'
-import { GoogleSocialLoginCallbackRoute } from './callback'
-
-class FakeJwtService extends JwtService {
-	async sign(): Promise<string> {
-		return 'fake-access-token'
-	}
-	async verify<T extends JWTPayload = JWTPayload>(): Promise<T> {
-		return {} as T
-	}
-	async decode<T extends JWTPayload = JWTPayload>(): Promise<T> {
-		return {} as T
-	}
-	async signAccessToken(): Promise<string> {
-		return 'fake-access-token'
-	}
-	async verifyAccessToken(): Promise<JWTPayload | null> {
-		return null
-	}
-}
-
-class FakeJwtTokenGenerator extends JwtTokenGenerator {
-	async generateRefreshToken(): Promise<string> {
-		return 'fake-refresh-token'
-	}
-	async hashRefreshToken(): Promise<string> {
-		return 'fake-refresh-token-hash'
-	}
-}
+import { registerRegistrationRoutes } from './index'
 
 const FAKE_PROFILE = {
 	providerAccountId: 'g-123',
@@ -99,32 +75,47 @@ describe('GET /social-login/google/callback (integration)', () => {
 
 		oauthStateRepository = new DrizzleOAuthStateRepository(txService)
 		const userRepository = new DrizzleUserRepository(txService)
+		const passwordCredentialRepository =
+			new DrizzlePasswordCredentialRepository(txService)
 		const oauthAccountRepository = new DrizzleOAuthAccountRepository(txService)
 		const refreshTokenRepository = new DrizzleRefreshTokenRepository(txService)
 		const profileRepository = new DrizzleProfileRepository(txService)
 
 		const integrationBus = new IntegrationEventBus()
 
-		buildProfileModule({ integrationBus, profileRepository })
-
-		const socialLoginUseCase = new SocialLoginUseCase({
+		const authModule = buildAuthModule({
 			userRepository,
+			passwordCredentialRepository,
 			oauthAccountRepository,
+			oauthStateRepository,
 			refreshTokenRepository,
-			jwtService: new FakeJwtService(),
-			tokenGenerator: new FakeJwtTokenGenerator(),
-			domainEvents: new DomainEventDispatcher(),
+			hashGenerator: new FakeHashGenerator(),
+			hashVerifier: { verify: async () => true } as never,
+			jwtService: new FakeJwtService() as unknown as TokenService,
+			tokenGenerator: new FakeJwtTokenGenerator() as unknown as TokenService,
+			oauthProviderService,
+			integrationBus,
+		})
+
+		const profileModule = buildProfileModule({
+			integrationBus,
+			profileRepository,
+		})
+
+		const registrationFeature = buildRegistrationFeature({
+			txRunner: txService,
+			authModule,
+			profileModule,
 			integrationBus,
 		})
 
 		app = createApp()
 		await app.register(async instance => {
-			new GoogleSocialLoginCallbackRoute({
+			registerRegistrationRoutes({
 				app: instance.withTypeProvider<ZodTypeProvider>(),
-				oauthProviderService,
-				oauthStateRepository,
-				socialLoginUseCase,
-			}).register()
+				registrationFeature,
+				authModule,
+			})
 		})
 		await app.ready()
 	})
@@ -148,7 +139,7 @@ describe('GET /social-login/google/callback (integration)', () => {
 		)
 	}
 
-	it('redireciona para oauth-success, seta cookies e cria usuário novo', async () => {
+	it('redireciona para oauth-success, seta cookies e cria usuário novo + profile', async () => {
 		await seedState('s-new')
 
 		const response = await app.inject({
@@ -194,8 +185,7 @@ describe('GET /social-login/google/callback (integration)', () => {
 		})
 	})
 
-	it('redireciona com new=false quando o usuário já existe', async () => {
-		// Pré-popula state + user existente já vinculado ao provider
+	it('redireciona com new=false quando o usuário já existe e tem link OAuth', async () => {
 		await seedState('s-existing')
 		await db.insert(userTable).values({
 			id: 'existing-user-1',

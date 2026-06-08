@@ -61,6 +61,12 @@ async function bootstrap() {
 	const { registerProfileRoutes } = await import(
 		'@/modules/profile/infrastructure/http/routes'
 	)
+	const { buildRegistrationFeature } = await import(
+		'@/features/registration/registration-feature'
+	)
+	const { registerRegistrationRoutes } = await import(
+		'@/features/registration/infrastructure/http/routes'
+	)
 	const { makeAuthGuard } = await import('@/http/middleware/auth/authed')
 	const { makeAuthed } = await import('@/http/auth-factory')
 
@@ -113,6 +119,13 @@ async function bootstrap() {
 		profileRepository,
 	})
 
+	const registrationFeature = buildRegistrationFeature({
+		txRunner: txService,
+		authModule,
+		profileModule,
+		integrationBus,
+	})
+
 	// 7. Primitivas HTTP de auth (criadas UMA vez)
 	const authenticate = makeAuthGuard(authModule.services.accessTokenVerifier)
 	const authed = makeAuthed(authenticate)
@@ -133,6 +146,14 @@ async function bootstrap() {
 			app: instance.withTypeProvider<ZodTypeProvider>(),
 			profileModule,
 			authed,
+		})
+	})
+
+	app.register(async instance => {
+		registerRegistrationRoutes({
+			app: instance.withTypeProvider<ZodTypeProvider>(),
+			registrationFeature,
+			authModule,
 		})
 	})
 

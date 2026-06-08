@@ -1,20 +1,20 @@
 import { routeSchemas } from '@backstream/shared/types/http/routes/auth/social-login/google-callback'
 import { ArcticFetchError, OAuth2RequestError } from 'arctic'
 import { env } from '@/config'
+import type { RegisterUserViaSocialUseCase } from '@/features/registration/application/use-cases/register-user-via-social.use-case'
 import type { HttpApp } from '@/http/app'
 import {
 	OAUTH_ACCESS_TOKEN_HANDOFF_SECONDS,
 	REFRESH_TOKEN_EXPIRY_SECONDS,
 } from '@/modules/auth/application/constants'
 import type { OAuthStateRepository } from '@/modules/auth/application/repositories/oauth-state-repository'
-import type { SocialLoginUseCase } from '@/modules/auth/application/use-cases/social-login-use-case'
 import type { OAuthProviderService } from '@/modules/auth/infrastructure/auth/oauth-provider-service'
 
 type GoogleSocialLoginCallbackRouteProps = {
 	app: HttpApp
 	oauthProviderService: OAuthProviderService
 	oauthStateRepository: OAuthStateRepository
-	socialLoginUseCase: SocialLoginUseCase
+	registerUserViaSocialUseCase: RegisterUserViaSocialUseCase
 }
 
 const { query, response } = routeSchemas
@@ -25,7 +25,7 @@ export class GoogleSocialLoginCallbackRoute {
 	register() {
 		this.props.app.get('/social-login/google/callback', {
 			schema: {
-				tags: ['Auth'],
+				tags: ['Registration'],
 				summary: 'Callback de OAuth do Google',
 				security: [],
 				querystring: query,
@@ -55,7 +55,7 @@ export class GoogleSocialLoginCallbackRoute {
 							.send({ error: 'Invalid role for social login' })
 					}
 
-					const result = await this.props.socialLoginUseCase.execute({
+					const result = await this.props.registerUserViaSocialUseCase.execute({
 						provider: 'google',
 						providerAccountId: profile.providerAccountId,
 						email: profile.email,

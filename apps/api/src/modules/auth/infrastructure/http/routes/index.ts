@@ -5,10 +5,7 @@ import { LoginRoute } from './login'
 import { LogoutRoute } from './logout'
 import { MeRoute } from './me'
 import { RefreshTokenRoute } from './refresh-token'
-import {
-	GoogleSocialLoginCallbackRoute,
-	GoogleSocialLoginStartRoute,
-} from './social-login/google'
+import { GoogleSocialLoginStartRoute } from './social-login/google'
 
 type RegisterAuthRoutesDeps = {
 	app: HttpApp
@@ -40,11 +37,5 @@ export function registerAuthRoutes({
 		app,
 		oauthProviderService: authModule.services.oauthProvider,
 		oauthStateRepository: authModule.services.oauthState,
-	}).register()
-	new GoogleSocialLoginCallbackRoute({
-		app,
-		oauthProviderService: authModule.services.oauthProvider,
-		oauthStateRepository: authModule.services.oauthState,
-		socialLoginUseCase: authModule.useCases.socialLogin,
 	}).register()
 }
