@@ -2,8 +2,8 @@ import type { IntegrationEventBus } from '@backstream/core/events/integration-ev
 import type { AuthModule } from '@/modules/auth/auth-module'
 import type { ProfileModule } from '@/modules/profile/profile-module'
 import type { TransactionRunner } from '@/shared/transaction/transaction-runner'
-import { RegisterUserUseCase } from './application/use-cases/register-user.use-case'
-import { RegisterUserViaSocialUseCase } from './application/use-cases/register-user-via-social.use-case'
+import { RegisterUserUseCase } from './application/use-cases/register-user-use-case'
+import { RegisterUserViaSocialUseCase } from './application/use-cases/register-user-via-social-use-case'
 
 export type RegistrationFeatureDependencies = {
 	txRunner: TransactionRunner

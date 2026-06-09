@@ -1,6 +1,6 @@
 import { routeSchemas } from '@backstream/shared/types/http/routes/auth/register'
+import type { RegisterUserUseCase } from '@/features/registration/application/use-cases/register-user-use-case'
 import type { HttpApp } from '@/http/app'
-import type { RegisterUserUseCase } from '@/features/registration/application/use-cases/register-user.use-case'
 
 type RegisterRouteProps = {
 	app: HttpApp

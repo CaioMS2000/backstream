@@ -1,11 +1,10 @@
+import type { FailureOf, Result } from '@backstream/core'
 import {
 	failure,
-	IntegrationEvent,
 	IntegrationEventBus,
 	success,
 	UniqueId,
 } from '@backstream/core'
-import type { FailureOf, Result } from '@backstream/core'
 import { RegistrationCompleted } from '@/features/registration/public/events/registration-completed'
 import { AuthModule } from '@/modules/auth/auth-module'
 import {
@@ -16,6 +15,7 @@ import { SocialUserRegistered } from '@/modules/auth/public/events/social-user-r
 import { AuthenticatedUser } from '@/modules/auth/public/types/authenticated-user'
 import { ProfileModule } from '@/modules/profile/profile-module'
 import { CreateProfileCommandOutput } from '@/modules/profile/public/commands/create-profile-command'
+import { IntegrationBusAfterCommit } from '@/shared/events/integration-bus-after-commit'
 import { now } from '@/shared/infrastructure/clock'
 import { generateId } from '@/shared/infrastructure/id-generator'
 import { RollbackSignal } from '@/shared/transaction/rollback-signal'
@@ -67,7 +67,7 @@ export class RegisterUserViaSocialUseCase {
 			})
 		}
 
-		const eventsAfterCommit: IntegrationEvent[] = []
+		const events = new IntegrationBusAfterCommit(this.eventsAfterCommit)
 		let result: Output
 		try {
 			result = await this.txRunner.run(async () => {
@@ -112,10 +112,8 @@ export class RegisterUserViaSocialUseCase {
 					user: { email, roles, userId },
 				})
 
-				eventsAfterCommit.push(
-					new RegistrationCompleted(uniqueUserId, email, rightNow)
-				)
-				eventsAfterCommit.push(
+				events.enqueue(new RegistrationCompleted(uniqueUserId, email, rightNow))
+				events.enqueue(
 					new SocialUserRegistered(uniqueUserId, { name: input.name }, rightNow)
 				)
 
@@ -128,13 +126,7 @@ export class RegisterUserViaSocialUseCase {
 			throw err
 		}
 
-		// Subscribers rodam APÓS o commit e são aguardados (await).
-		// Se um handler lançar, esta request falha embora o usuário JÁ esteja
-		// persistido. Mover pra try/catch ou outbox se algum handler não puder
-		// derrubar a resposta. Ver docs/adr/0001-dispatch-de-eventos-pos-commit.md
-		for (const event of eventsAfterCommit) {
-			await this.eventsAfterCommit.publish(event)
-		}
+		await events.flush()
 
 		return result
 	}

@@ -1,11 +1,11 @@
+import type { FailureOf, Result } from '@backstream/core'
 import {
 	failure,
-	IntegrationEvent,
 	IntegrationEventBus,
 	success,
 	UniqueId,
 } from '@backstream/core'
-import type { FailureOf, Result } from '@backstream/core'
+import { RegistrationCompleted } from '@/features/registration/public/events/registration-completed'
 import { AuthModule } from '@/modules/auth/auth-module'
 import {
 	CreateCredentialsCommandInput,
@@ -13,12 +13,12 @@ import {
 } from '@/modules/auth/public/commands/create-credentials-command'
 import { IssueTokensCommandInput } from '@/modules/auth/public/commands/issue-tokens-command'
 import { AuthenticatedUser } from '@/modules/auth/public/types/authenticated-user'
-import { RegistrationCompleted } from '@/features/registration/public/events/registration-completed'
 import { ProfileModule } from '@/modules/profile/profile-module'
 import {
 	CreateProfileCommandInput,
 	CreateProfileCommandOutput,
 } from '@/modules/profile/public/commands/create-profile-command'
+import { IntegrationBusAfterCommit } from '@/shared/events/integration-bus-after-commit'
 import { now } from '@/shared/infrastructure/clock'
 import { generateId } from '@/shared/infrastructure/id-generator'
 import { RollbackSignal } from '@/shared/transaction/rollback-signal'
@@ -48,7 +48,7 @@ export class RegisterUserUseCase {
 	constructor(private props: Props) {}
 
 	async execute(input: Input): Promise<Output> {
-		const eventsAfterCommit: IntegrationEvent[] = []
+		const events = new IntegrationBusAfterCommit(this.eventsAfterCommit)
 		let result: Output
 		try {
 			result = await this.txRunner.run(async () => {
@@ -101,7 +101,7 @@ export class RegisterUserUseCase {
 					rightNow
 				)
 
-				eventsAfterCommit.push(registrationCompletedEvent)
+				events.enqueue(registrationCompletedEvent)
 
 				return success({ ...tokens, user })
 			})
@@ -112,13 +112,7 @@ export class RegisterUserUseCase {
 			throw err
 		}
 
-		// Subscribers rodam APÓS o commit e são aguardados (await).
-		// Se um handler lançar, esta request falha embora o usuário JÁ esteja
-		// persistido. Mover pra try/catch ou outbox se algum handler não puder
-		// derrubar a resposta. Ver docs/adr/0001-dispatch-de-eventos-pos-commit.md
-		for (const event of eventsAfterCommit) {
-			await this.eventsAfterCommit.publish(event)
-		}
+		await events.flush()
 
 		return result
 	}
