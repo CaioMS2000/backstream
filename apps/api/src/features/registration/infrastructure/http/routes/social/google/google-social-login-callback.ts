@@ -1,7 +1,7 @@
 import { routeSchemas } from '@backstream/shared/types/http/routes/auth/social-login/google-callback'
 import { ArcticFetchError, OAuth2RequestError } from 'arctic'
 import { env } from '@/config'
-import type { RegisterUserViaSocialUseCase } from '@/features/registration/application/use-cases/register-user-via-social.use-case'
+import type { RegisterUserViaSocialUseCase } from '@/features/registration/application/use-cases/register-user-via-social-use-case'
 import type { HttpApp } from '@/http/app'
 import {
 	OAUTH_ACCESS_TOKEN_HANDOFF_SECONDS,

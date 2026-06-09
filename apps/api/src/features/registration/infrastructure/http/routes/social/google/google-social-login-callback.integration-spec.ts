@@ -46,7 +46,7 @@ import {
 import type { DrizzleTx } from '@/shared/transaction/db-context'
 import { DrizzleTransactionService } from '@/shared/transaction/drizzle-transaction-service'
 import { resetDb } from '@/test/reset-db'
-import { registerRegistrationRoutes } from './index'
+import { registerRegistrationRoutes } from '../../index'
 
 const FAKE_PROFILE = {
 	providerAccountId: 'g-123',

@@ -1,7 +1,7 @@
 import type { RegistrationFeature } from '@/features/registration/registration-feature'
 import type { HttpApp } from '@/http/app'
 import type { AuthModule } from '@/modules/auth/auth-module'
-import { GoogleSocialLoginCallbackRoute } from './google-social-login-callback'
+import { GoogleSocialLoginCallbackRoute } from './social/google/google-social-login-callback'
 import { RegisterRoute } from './register'
 
 type RegisterRegistrationRoutesDeps = {
