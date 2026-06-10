@@ -17,6 +17,7 @@ import { ProfileRepository } from '../repositories/profile-repository'
 export type CreateProfileUseCaseRequest = {
 	name: string
 	phone: string | null
+	avatarUrl: string | null
 	userId: string
 }
 
@@ -60,6 +61,7 @@ export class CreateProfileUseCase {
 			userId: UniqueId(input.userId),
 			name: input.name,
 			phone,
+			avatarUrl: input.avatarUrl,
 			now: now(),
 		})
 

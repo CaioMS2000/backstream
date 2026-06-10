@@ -1,7 +1,7 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import { ProfileDrizzleModel } from '../schemas'
-import { Phone } from '@/shared/domain'
 import { Profile } from '@/modules/profile/domain/profile'
+import { Phone } from '@/shared/domain'
+import { ProfileDrizzleModel } from '../schemas'
 
 type ToPersistenceParams = Profile
 
@@ -13,6 +13,7 @@ export class ProfileMapper {
 			id: UniqueId(record.id),
 			name: record.name,
 			phone,
+			avatarUrl: record.avatarUrl,
 			userId: UniqueId(record.userId),
 			createdAt: record.createdAt,
 			updatedAt: record.updatedAt,
@@ -24,6 +25,7 @@ export class ProfileMapper {
 			id: data.id,
 			name: data.name,
 			phone: data.phone?.value ?? null,
+			avatarUrl: data.avatarUrl,
 			userId: data.userId,
 			createdAt: data.createdAt,
 			updatedAt: data.updatedAt,

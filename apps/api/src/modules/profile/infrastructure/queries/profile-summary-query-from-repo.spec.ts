@@ -18,6 +18,7 @@ describe('ProfileSummaryQueryFromRepo', () => {
 		userId: string
 		name?: string
 		phone?: string | null
+		avatarUrl?: string | null
 	}): Profile {
 		const phoneResult = Phone.createOptional(opts.phone ?? null)
 		if (phoneResult.isFailure()) {
@@ -29,6 +30,7 @@ describe('ProfileSummaryQueryFromRepo', () => {
 			userId: UniqueId(opts.userId),
 			name: opts.name ?? 'Seeded Profile',
 			phone: phoneResult.value,
+			avatarUrl: opts.avatarUrl ?? null,
 			createdAt: new Date(),
 			updatedAt: null,
 		})
@@ -67,5 +69,25 @@ describe('ProfileSummaryQueryFromRepo', () => {
 		const summary = await sut.findByUserId(UniqueId('user-1'))
 
 		expect(summary?.name).toBe('João Silva')
+	})
+
+	it('repassa o avatarUrl no summary', async () => {
+		seedProfile({
+			userId: 'user-1',
+			phone: null,
+			avatarUrl: 'https://cdn.example.com/avatar.png',
+		})
+
+		const summary = await sut.findByUserId(UniqueId('user-1'))
+
+		expect(summary?.avatarUrl).toBe('https://cdn.example.com/avatar.png')
+	})
+
+	it('retorna avatarUrl null quando não há avatar', async () => {
+		seedProfile({ userId: 'user-1', phone: null })
+
+		const summary = await sut.findByUserId(UniqueId('user-1'))
+
+		expect(summary?.avatarUrl).toBeNull()
 	})
 })

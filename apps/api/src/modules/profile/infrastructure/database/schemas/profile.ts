@@ -5,6 +5,7 @@ export const profile = pgTable('profile', {
 	userId: text('user_id').notNull().unique(),
 	name: text('name').notNull(),
 	phone: text('phone').unique(),
+	avatarUrl: text('avatar_url'),
 	updatedAt: timestamp('updated_at'),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 })

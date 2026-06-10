@@ -7,6 +7,7 @@ export type ProfileProps = {
 	userId: UniqueId
 	name: string
 	phone: Phone | null
+	avatarUrl: string | null
 	createdAt: Date
 	updatedAt: Date | null
 }
@@ -28,6 +29,7 @@ export class Profile extends AggregateRoot {
 		const profile = new Profile(input.id, {
 			name: input.name,
 			phone: input.phone,
+			avatarUrl: input.avatarUrl,
 			userId: input.userId,
 			createdAt: input.now,
 			updatedAt: null,
@@ -72,6 +74,10 @@ export class Profile extends AggregateRoot {
 
 	get phone(): Phone | null {
 		return this.props.phone
+	}
+
+	get avatarUrl(): string | null {
+		return this.props.avatarUrl
 	}
 
 	get userId(): UniqueId {

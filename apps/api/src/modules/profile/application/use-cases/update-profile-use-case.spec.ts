@@ -61,6 +61,7 @@ describe('UpdateProfileUseCase', () => {
 			userId: UniqueId(opts.userId),
 			name: opts.name ?? 'Seeded Profile',
 			phone: phoneResult.value,
+			avatarUrl: null,
 			createdAt: new Date(),
 			updatedAt: null,
 		})

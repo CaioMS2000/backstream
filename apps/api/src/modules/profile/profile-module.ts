@@ -2,13 +2,13 @@ import { DomainEventDispatcher } from '@backstream/core/events/domain-event-disp
 import type { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
 import { SocialUserRegistered } from '@/modules/auth/public/events/social-user-registered'
 import { ProfileAlreadyExistsError } from './application/@errors/profile-already-exists-error'
+import { CreateProfileCommandImpl } from './application/commands/create-profile-command'
 import { ProfileRepository } from './application/repositories/profile-repository'
 import { CreateProfileUseCase } from './application/use-cases/create-profile-use-case'
 import { UpdateProfileUseCase } from './application/use-cases/update-profile-use-case'
 import { ProfileSummaryQueryFromRepo } from './infrastructure/queries/profile-summary-query-from-repo'
-import type { ProfileSummaryQuery } from './public/queries/profile-summary-query'
 import { CreateProfileCommand } from './public/commands/create-profile-command'
-import { CreateProfileCommandImpl } from './application/commands/create-profile-command'
+import type { ProfileSummaryQuery } from './public/queries/profile-summary-query'
 
 export type ProfileModuleDependencies = {
 	integrationBus: IntegrationEventBus
@@ -45,6 +45,7 @@ function registerIntegrationSubscribers(
 			userId: event.userId,
 			name: event.providerProfile.name,
 			phone: null,
+			avatarUrl: null,
 		})
 
 		if (

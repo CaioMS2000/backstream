@@ -23,6 +23,7 @@ describe('CreateProfileUseCase', () => {
 	const baseInput = {
 		name: 'João Silva',
 		phone: '5511987654321',
+		avatarUrl: null,
 		userId: 'user-1',
 	}
 

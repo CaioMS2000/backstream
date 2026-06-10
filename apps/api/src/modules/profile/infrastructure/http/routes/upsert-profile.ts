@@ -1,8 +1,8 @@
 import { routeSchemas } from '@backstream/shared/types/http/routes/profile/upsert'
 import type { FastifyReply } from 'fastify'
+import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { HttpApp } from '@/http/app'
 import type { Authed } from '@/http/auth-factory'
-import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { PhoneAlreadyRegisteredError } from '@/modules/profile/application/@errors'
 import { ProfileAlreadyExistsError } from '@/modules/profile/application/@errors/profile-already-exists-error'
 import { ProfileNotFoundError } from '@/modules/profile/application/@errors/profile-not-found-error'
@@ -46,8 +46,10 @@ export class UpsertProfileRoute {
 						return this.respondError(reply, updateResult.value)
 					}
 
-					const createResult =
-						await this.props.createProfileUseCase.execute(input)
+					const createResult = await this.props.createProfileUseCase.execute({
+						...input,
+						avatarUrl: null,
+					})
 
 					if (createResult.isSuccess()) {
 						return reply

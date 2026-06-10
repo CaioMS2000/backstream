@@ -22,6 +22,7 @@ export class DrizzleProfileRepository extends ProfileRepository {
 				set: {
 					name: record.name,
 					phone: record.phone,
+					avatarUrl: record.avatarUrl,
 					updatedAt: record.updatedAt,
 				},
 			})

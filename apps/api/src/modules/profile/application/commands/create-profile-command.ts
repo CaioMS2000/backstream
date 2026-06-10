@@ -34,6 +34,7 @@ export class CreateProfileCommandImpl extends CreateProfileCommand {
 			userId: profile.userId,
 			name: profile.name,
 			phone: profile.phone?.value ?? null,
+			avatarUrl: profile.avatarUrl,
 		})
 	}
 }

@@ -3,6 +3,7 @@ import type { UniqueId } from '@backstream/core/unique-id'
 export type ProfileSummary = {
 	name: string
 	phone: string | null
+	avatarUrl: string | null
 	profileCompleted: boolean
 }
 

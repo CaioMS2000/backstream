@@ -96,6 +96,7 @@ export class RegisterUserViaSocialUseCase {
 						id: await generateId(),
 						now: rightNow,
 						phone: null,
+						avatarUrl: null,
 					})
 
 				if (createProfileResult.isFailure()) {

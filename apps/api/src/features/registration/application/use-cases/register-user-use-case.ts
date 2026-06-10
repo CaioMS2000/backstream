@@ -69,6 +69,7 @@ export class RegisterUserUseCase {
 					id: await generateId(),
 					now: rightNow,
 					phone: null,
+					avatarUrl: null,
 				}
 
 				const createProfileResult =
