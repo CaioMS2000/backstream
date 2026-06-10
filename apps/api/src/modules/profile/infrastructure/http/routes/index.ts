@@ -1,7 +1,7 @@
 import type { HttpApp } from '@/http/app'
 import type { Authed } from '@/http/auth-factory'
 import type { ProfileModule } from '@/modules/profile/profile-module'
-import { UpsertProfileRoute } from './upsert-profile'
+import { UpdateProfileRoute } from './update-profile'
 
 type RegisterProfileRoutesDeps = {
 	app: HttpApp
@@ -14,10 +14,9 @@ export function registerProfileRoutes({
 	profileModule,
 	authed,
 }: RegisterProfileRoutesDeps) {
-	new UpsertProfileRoute({
+	new UpdateProfileRoute({
 		app,
 		authed,
-		createProfileUseCase: profileModule.useCases.createProfile,
 		updateProfileUseCase: profileModule.useCases.updateProfile,
 	}).register()
 }

@@ -15,6 +15,7 @@ const response = {
 		}),
 	}),
 	400: errorSchema, // InvalidValueError (phone malformado)
+	404: errorSchema, // ProfileNotFoundError (defesa; impossível na prática pós-REF-04)
 	409: errorSchema, // PhoneAlreadyRegisteredError
 }
 

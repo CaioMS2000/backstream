@@ -17,7 +17,6 @@ import { createDrizzle, type DrizzleClient } from '@/lib/drizzle'
 import type { Role } from '@/modules/auth/domain/role'
 import { AccessTokenVerifier } from '@/modules/auth/public/services/access-token-verifier'
 import type { AuthenticatedUser } from '@/modules/auth/public/types/authenticated-user'
-import { CreateProfileUseCase } from '@/modules/profile/application/use-cases/create-profile-use-case'
 import { UpdateProfileUseCase } from '@/modules/profile/application/use-cases/update-profile-use-case'
 import { DrizzleProfileRepository } from '@/modules/profile/infrastructure/database/repositories/profile-repository'
 import { profile as profileTable } from '@/modules/profile/infrastructure/database/schemas'
@@ -32,7 +31,7 @@ import {
 import type { DrizzleTx } from '@/shared/transaction/db-context'
 import { DrizzleTransactionService } from '@/shared/transaction/drizzle-transaction-service'
 import { resetDb } from '@/test/reset-db'
-import { UpsertProfileRoute } from './upsert-profile'
+import { UpdateProfileRoute } from './update-profile'
 
 const USER_ID = 'user-1'
 const USER_EMAIL = 'caio@example.com'
@@ -70,10 +69,6 @@ describe('PUT /profile (integration)', () => {
 		const profileRepository = new DrizzleProfileRepository(txService)
 		const domainEvents = new DomainEventDispatcher()
 
-		const createProfileUseCase = new CreateProfileUseCase({
-			profileRepository,
-			domainEvents,
-		})
 		const updateProfileUseCase = new UpdateProfileUseCase({
 			profileRepository,
 			domainEvents,
@@ -83,10 +78,9 @@ describe('PUT /profile (integration)', () => {
 
 		app = createApp()
 		await app.register(async instance => {
-			new UpsertProfileRoute({
+			new UpdateProfileRoute({
 				app: instance.withTypeProvider<ZodTypeProvider>(),
 				authed,
-				createProfileUseCase,
 				updateProfileUseCase,
 			}).register()
 		})
@@ -117,7 +111,7 @@ describe('PUT /profile (integration)', () => {
 		})
 	}
 
-	it('retorna 200 e cria o profile quando o usuário ainda não tem um', async () => {
+	it('retorna 404 quando o usuário ainda não tem profile', async () => {
 		const response = await app.inject({
 			method: 'PUT',
 			url: '/profile',
@@ -125,19 +119,11 @@ describe('PUT /profile (integration)', () => {
 			payload: baseBody,
 		})
 
-		if (response.statusCode !== 200) console.error('DEBUG', response.body)
-		expect(response.statusCode).toBe(200)
-		expect(response.json()).toEqual({
-			profile: { name: baseBody.name, phone: baseBody.phone },
-		})
+		expect(response.statusCode).toBe(404)
+		expect(response.json()).toEqual({ error: 'Profile not found' })
 
 		const profiles = await db.select().from(profileTable)
-		expect(profiles).toHaveLength(1)
-		expect(profiles[0]).toMatchObject({
-			userId: USER_ID,
-			name: baseBody.name,
-			phone: baseBody.phone,
-		})
+		expect(profiles).toHaveLength(0)
 	})
 
 	it('retorna 200 e atualiza o profile quando o usuário já tem um', async () => {
@@ -197,6 +183,7 @@ describe('PUT /profile (integration)', () => {
 	})
 
 	it('retorna 409 quando o telefone já pertence a outro usuário', async () => {
+		await seedProfile({ id: 'profile-me', userId: USER_ID, phone: null })
 		await seedProfile({
 			id: 'profile-other',
 			userId: 'other-user',
@@ -214,11 +201,13 @@ describe('PUT /profile (integration)', () => {
 		expect(response.json()).toEqual({ error: 'Phone already registered' })
 
 		const profiles = await db.select().from(profileTable)
-		expect(profiles).toHaveLength(1)
-		expect(profiles[0].userId).toBe('other-user')
+		const mine = profiles.find(p => p.userId === USER_ID)
+		expect(mine?.phone).toBeNull()
 	})
 
 	it('retorna 400 quando o telefone passa pelo zod mas falha no domínio', async () => {
+		await seedProfile({ id: 'profile-me', userId: USER_ID, phone: null })
+
 		const response = await app.inject({
 			method: 'PUT',
 			url: '/profile',
@@ -231,7 +220,9 @@ describe('PUT /profile (integration)', () => {
 			error: 'Phone must have between 12 and 13 digits',
 		})
 
-		const profiles = await db.select().from(profileTable)
-		expect(profiles).toHaveLength(0)
+		const mine = (await db.select().from(profileTable)).find(
+			p => p.userId === USER_ID
+		)
+		expect(mine?.phone).toBeNull()
 	})
 })
