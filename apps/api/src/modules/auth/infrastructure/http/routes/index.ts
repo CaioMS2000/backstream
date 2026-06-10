@@ -1,6 +1,7 @@
 import type { HttpApp } from '@/http/app'
 import type { Authed } from '@/http/auth-factory'
 import type { AuthModule } from '@/modules/auth/auth-module'
+import type { ProfileSummaryComposer } from '@/shared/http/profile-summary-composer'
 import { LoginRoute } from './login'
 import { LogoutRoute } from './logout'
 import { MeRoute } from './me'
@@ -11,18 +12,25 @@ type RegisterAuthRoutesDeps = {
 	app: HttpApp
 	authModule: AuthModule
 	authed: Authed
+	profileComposer: ProfileSummaryComposer
 }
 
 export function registerAuthRoutes({
 	app,
 	authModule,
 	authed,
+	profileComposer,
 }: RegisterAuthRoutesDeps) {
-	new LoginRoute({ app, loginUseCase: authModule.useCases.login }).register()
+	new LoginRoute({
+		app,
+		loginUseCase: authModule.useCases.login,
+		profileComposer,
+	}).register()
 	new MeRoute({
 		app,
 		authed,
 		userSummaryQuery: authModule.queries.userSummary,
+		profileComposer,
 	}).register()
 	new LogoutRoute({
 		app,

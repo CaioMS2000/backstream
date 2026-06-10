@@ -19,6 +19,10 @@ import { user as userTable } from '@/modules/auth/infrastructure/database/schema
 import { UserSummaryQueryFromRepo } from '@/modules/auth/infrastructure/queries/user-summary-query-from-repo'
 import { AccessTokenVerifier } from '@/modules/auth/public/services/access-token-verifier'
 import type { AuthenticatedUser } from '@/modules/auth/public/types/authenticated-user'
+import { DrizzleProfileRepository } from '@/modules/profile/infrastructure/database/repositories/profile-repository'
+import { profile as profileTable } from '@/modules/profile/infrastructure/database/schemas'
+import { ProfileSummaryQueryFromRepo } from '@/modules/profile/infrastructure/queries/profile-summary-query-from-repo'
+import { ProfileSummaryComposer } from '@/shared/http/profile-summary-composer'
 import {
 	__resetClockForTests,
 	initializeClock,
@@ -62,6 +66,9 @@ describe('GET /me (integration)', () => {
 
 		const userRepository = new DrizzleUserRepository(txService)
 		const userSummaryQuery = new UserSummaryQueryFromRepo(userRepository)
+		const profileComposer = new ProfileSummaryComposer(
+			new ProfileSummaryQueryFromRepo(new DrizzleProfileRepository(txService))
+		)
 		const authed = makeAuthed(makeAuthGuard(new FakeAccessTokenVerifier()))
 
 		app = createApp()
@@ -70,6 +77,7 @@ describe('GET /me (integration)', () => {
 				app: instance.withTypeProvider<ZodTypeProvider>(),
 				authed,
 				userSummaryQuery,
+				profileComposer,
 			}).register()
 		})
 		await app.ready()
@@ -92,6 +100,13 @@ describe('GET /me (integration)', () => {
 			roles: ['donor'],
 			revokedAt: opts.revoked ? new Date() : null,
 		})
+		await db.insert(profileTable).values({
+			id: 'profile-1',
+			userId: USER_ID,
+			name: 'Caio Tester',
+			phone: null,
+			avatarUrl: null,
+		})
 	}
 
 	it('retorna 200 com o resumo do user autenticado', async () => {
@@ -108,6 +123,9 @@ describe('GET /me (integration)', () => {
 			userId: USER_ID,
 			email: USER_EMAIL,
 			roles: ['donor'],
+			name: 'Caio Tester',
+			avatarUrl: null,
+			profileCompleted: false,
 		})
 	})
 

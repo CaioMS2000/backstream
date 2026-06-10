@@ -130,6 +130,13 @@ async function bootstrap() {
 	const authenticate = makeAuthGuard(authModule.services.accessTokenVerifier)
 	const authed = makeAuthed(authenticate)
 
+	const { ProfileSummaryComposer } = await import(
+		'@/shared/http/profile-summary-composer'
+	)
+	const profileComposer = new ProfileSummaryComposer(
+		profileModule.queries.profileSummary
+	)
+
 	// 8. Wireup HTTP de cada módulo — embrulhado em `register` para entrar na
 	// fila de plugins e ser executado APÓS swagger/scalar/etc., garantindo que
 	// o `onRoute` hook do swagger capture as rotas (e elas apareçam em /openapi.json).
@@ -138,6 +145,7 @@ async function bootstrap() {
 			app: instance.withTypeProvider<ZodTypeProvider>(),
 			authModule,
 			authed,
+			profileComposer,
 		})
 	})
 
@@ -154,6 +162,7 @@ async function bootstrap() {
 			app: instance.withTypeProvider<ZodTypeProvider>(),
 			registrationFeature,
 			authModule,
+			profileComposer,
 		})
 	})
 

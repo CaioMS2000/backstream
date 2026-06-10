@@ -13,11 +13,12 @@ import {
 	type Mock,
 	vi,
 } from 'vitest'
-import { buildRegistrationFeature } from '@/features/registration/registration-feature'
 import { RegistrationCompleted } from '@/features/registration/public/events/registration-completed'
+import { buildRegistrationFeature } from '@/features/registration/registration-feature'
 import { createApp, type HttpApp } from '@/http/app'
 import { createDrizzle, type DrizzleClient } from '@/lib/drizzle'
 import { buildAuthModule } from '@/modules/auth/auth-module'
+import { OAuthProviderService } from '@/modules/auth/infrastructure/auth/oauth-provider-service'
 import { TokenService } from '@/modules/auth/infrastructure/auth/token-service'
 import { DrizzleOAuthAccountRepository } from '@/modules/auth/infrastructure/database/repositories/oauth-account-repository'
 import { DrizzleOAuthStateRepository } from '@/modules/auth/infrastructure/database/repositories/oauth-state-repository'
@@ -28,7 +29,6 @@ import {
 	passwordCredential,
 	user as userTable,
 } from '@/modules/auth/infrastructure/database/schemas'
-import { OAuthProviderService } from '@/modules/auth/infrastructure/auth/oauth-provider-service'
 import { FakeHashGenerator } from '@/modules/auth/test/fake-hash-generator'
 import { FakeJwtService } from '@/modules/auth/test/fake-jwt-service'
 import { FakeJwtTokenGenerator } from '@/modules/auth/test/fake-jwt-token-generator'
@@ -40,6 +40,7 @@ import {
 	type ProfileModule,
 } from '@/modules/profile/profile-module'
 import { CreateProfileCommand } from '@/modules/profile/public/commands/create-profile-command'
+import { ProfileSummaryComposer } from '@/shared/http/profile-summary-composer'
 import {
 	__resetClockForTests,
 	initializeClock,
@@ -123,6 +124,9 @@ function buildApp(opts: {
 			app: instance.withTypeProvider<ZodTypeProvider>(),
 			registrationFeature,
 			authModule,
+			profileComposer: new ProfileSummaryComposer(
+				profileModule.queries.profileSummary
+			),
 		})
 	})
 
@@ -187,6 +191,9 @@ describe('POST /register (integration)', () => {
 				userId: users[0].id,
 				email: baseBody.email,
 				roles: ['donor'],
+				name: baseBody.email.split('@')[0],
+				avatarUrl: null,
+				profileCompleted: false,
 			},
 		})
 

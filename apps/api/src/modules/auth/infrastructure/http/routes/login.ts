@@ -3,10 +3,12 @@ import { env } from '@/config'
 import { HttpApp } from '@/http/app'
 import { REFRESH_TOKEN_EXPIRY_SECONDS } from '@/modules/auth/application/constants'
 import { LoginUseCase } from '@/modules/auth/application/use-cases/login-use-case'
+import { ProfileSummaryComposer } from '@/shared/http/profile-summary-composer'
 
 type LoginRouteProps = {
 	app: HttpApp
 	loginUseCase: LoginUseCase
+	profileComposer: ProfileSummaryComposer
 }
 
 const { body, response } = routeSchemas
@@ -20,6 +22,10 @@ export class LoginRoute {
 
 	get loginUseCase() {
 		return this.props.loginUseCase
+	}
+
+	get profileComposer() {
+		return this.props.profileComposer
 	}
 
 	register() {
@@ -46,7 +52,12 @@ export class LoginRoute {
 					maxAge: REFRESH_TOKEN_EXPIRY_SECONDS,
 				})
 
-				return reply.status(200).send(result.value)
+				const user = await this.profileComposer.compose(result.value.user)
+
+				return reply.status(200).send({
+					accessToken: result.value.accessToken,
+					user,
+				})
 			},
 		})
 	}

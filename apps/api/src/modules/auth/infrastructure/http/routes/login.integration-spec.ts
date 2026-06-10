@@ -24,6 +24,10 @@ import {
 	refreshToken as refreshTokenTable,
 	user as userTable,
 } from '@/modules/auth/infrastructure/database/schemas'
+import { DrizzleProfileRepository } from '@/modules/profile/infrastructure/database/repositories/profile-repository'
+import { profile as profileTable } from '@/modules/profile/infrastructure/database/schemas'
+import { ProfileSummaryQueryFromRepo } from '@/modules/profile/infrastructure/queries/profile-summary-query-from-repo'
+import { ProfileSummaryComposer } from '@/shared/http/profile-summary-composer'
 import {
 	__resetClockForTests,
 	initializeClock,
@@ -102,11 +106,16 @@ describe('POST /login (integration)', () => {
 			tokenIssuer,
 		})
 
+		const profileComposer = new ProfileSummaryComposer(
+			new ProfileSummaryQueryFromRepo(new DrizzleProfileRepository(txService))
+		)
+
 		app = createApp()
 		await app.register(async instance => {
 			new LoginRoute({
 				app: instance.withTypeProvider<ZodTypeProvider>(),
 				loginUseCase,
+				profileComposer,
 			}).register()
 		})
 		await app.ready()
@@ -139,6 +148,13 @@ describe('POST /login (integration)', () => {
 			passwordHash: `hashed:${opts.password}`,
 			revokedAt: null,
 		})
+		await db.insert(profileTable).values({
+			id: 'profile-1',
+			userId,
+			name: 'Caio Tester',
+			phone: null,
+			avatarUrl: null,
+		})
 		return userId
 	}
 
@@ -161,6 +177,9 @@ describe('POST /login (integration)', () => {
 				userId,
 				email: 'caio@example.com',
 				roles: ['donor'],
+				name: 'Caio Tester',
+				avatarUrl: null,
+				profileCompleted: false,
 			},
 		})
 

@@ -35,6 +35,7 @@ import { FakeOAuthProviderAdapter } from '@/modules/auth/test/fake-oauth-provide
 import { DrizzleProfileRepository } from '@/modules/profile/infrastructure/database/repositories/profile-repository'
 import { profile as profileTable } from '@/modules/profile/infrastructure/database/schemas'
 import { buildProfileModule } from '@/modules/profile/profile-module'
+import { ProfileSummaryComposer } from '@/shared/http/profile-summary-composer'
 import {
 	__resetClockForTests,
 	initializeClock,
@@ -115,6 +116,9 @@ describe('GET /social-login/google/callback (integration)', () => {
 				app: instance.withTypeProvider<ZodTypeProvider>(),
 				registrationFeature,
 				authModule,
+				profileComposer: new ProfileSummaryComposer(
+					profileModule.queries.profileSummary
+				),
 			})
 		})
 		await app.ready()
