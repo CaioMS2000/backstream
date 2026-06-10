@@ -1,6 +1,6 @@
 import { Result, success } from '@backstream/core/result'
-import type { RefreshTokenRepository } from '../repositories/refresh-token-repository'
 import type { JwtTokenGenerator } from '../jwt'
+import type { RefreshTokenRepository } from '../repositories/refresh-token-repository'
 
 export type LogoutUseCaseRequest = {
 	refreshToken: string

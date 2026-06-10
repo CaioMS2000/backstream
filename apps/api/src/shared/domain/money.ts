@@ -1,7 +1,7 @@
-import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { failure, Result, success } from '@backstream/core/result'
-import { MinMoneyAmountRule } from './rules/no-negative-money-amount'
+import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { Currency } from './currency'
+import { MinMoneyAmountRule } from './rules/no-negative-money-amount'
 
 export type MoneyProps = {
 	valueInCents: number

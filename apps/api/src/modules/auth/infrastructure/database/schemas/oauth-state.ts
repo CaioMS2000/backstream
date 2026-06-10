@@ -1,5 +1,5 @@
-import { Role } from '@/modules/auth/domain/role'
 import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { Role } from '@/modules/auth/domain/role'
 
 export const oauthState = pgTable('oauth_state', {
 	id: text('id').notNull().primaryKey(),

@@ -1,58 +1,58 @@
 {
-  "$schema": "https://turborepo.dev/schema.json",
-  "ui": "tui",
-  "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
-    },
-    "lint": {
-      "dependsOn": ["^lint"]
-    },
-    "check-types": {
-      "dependsOn": ["^check-types"]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "test": {
-      "dependsOn": ["^build"],
-      "cache": true
-    },
-    "test:integration": {
-      "dependsOn": ["^build"],
-      "cache": true
-    },
-    "test:watch": {
-      "cache": false,
-      "persistent": true
-    },
-    "test:integration:watch": {
-      "cache": false,
-      "persistent": true
-    },
-    "test:cov": {
-      "dependsOn": ["^build"],
-      "cache": false,
-      "outputs": ["coverage/**"]
-    },
-    "test:debug": {
-      "cache": false,
-      "persistent": true
-    },
-    "db:generate": {
-      "cache": false
-    },
-    "db:migrate": {
-      "cache": false
-    },
-    "db:push": {
-      "cache": false
-    },
-    "db:cleanup-test-schemas": {
-      "cache": false
-    }
-  }
+	"$schema": "https://turborepo.dev/schema.json",
+	"ui": "tui",
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"inputs": ["$TURBO_DEFAULT$", ".env*"],
+			"outputs": [".next/**", "!.next/cache/**"]
+		},
+		"lint": {
+			"dependsOn": ["^lint"]
+		},
+		"check-types": {
+			"dependsOn": ["^check-types"]
+		},
+		"dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"test": {
+			"dependsOn": ["^build"],
+			"cache": true
+		},
+		"test:integration": {
+			"dependsOn": ["^build"],
+			"cache": true
+		},
+		"test:watch": {
+			"cache": false,
+			"persistent": true
+		},
+		"test:integration:watch": {
+			"cache": false,
+			"persistent": true
+		},
+		"test:cov": {
+			"dependsOn": ["^build"],
+			"cache": false,
+			"outputs": ["coverage/**"]
+		},
+		"test:debug": {
+			"cache": false,
+			"persistent": true
+		},
+		"db:generate": {
+			"cache": false
+		},
+		"db:migrate": {
+			"cache": false
+		},
+		"db:push": {
+			"cache": false
+		},
+		"db:cleanup-test-schemas": {
+			"cache": false
+		}
+	}
 }

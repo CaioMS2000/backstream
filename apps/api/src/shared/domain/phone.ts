@@ -1,6 +1,6 @@
 import { failure, Result, success } from '@backstream/core/result'
-import { PhoneLengthRule } from './rules/phone-length-rule'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
+import { PhoneLengthRule } from './rules/phone-length-rule'
 
 //556293765723 -> 12 digitos(e 13 tambem porque em alguns estados os telefone ganharam um '9' a mais no começo)
 export class Phone {

@@ -3,10 +3,10 @@ import {
 	OAuthAccountRecord,
 	OAuthAccountRepository,
 } from '@/modules/auth/application/repositories/oauth-account-repository'
-import { DbContext } from '@/shared/transaction/db-context'
 import { generateId } from '@/shared/infrastructure/id-generator'
-import { oauthAccount } from '../schemas'
+import { DbContext } from '@/shared/transaction/db-context'
 import { OauthAccountMapper } from '../mappers/oauth-account-mapper'
+import { oauthAccount } from '../schemas'
 
 export class DrizzleOAuthAccountRepository extends OAuthAccountRepository {
 	constructor(private dbContext: DbContext) {

@@ -1,8 +1,8 @@
-import type { RouteSchemas } from '../../types/route'
 import { z } from 'zod'
-import { userSchema } from '../../types/user'
 import { errorSchema } from '../../responses'
 import { Role } from '../../types/role'
+import type { RouteSchemas } from '../../types/route'
+import { userSchema } from '../../types/user'
 
 const body = z.object({
 	email: z.email(),

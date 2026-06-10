@@ -1,6 +1,6 @@
-import { logger } from '@/shared/logger'
 import type { FastifyInstance } from 'fastify'
 import fastifyPlugin from 'fastify-plugin'
+import { logger } from '@/shared/logger'
 
 export const requestLogger = fastifyPlugin(async (app: FastifyInstance) => {
 	app.addHook('onRequest', async request => {

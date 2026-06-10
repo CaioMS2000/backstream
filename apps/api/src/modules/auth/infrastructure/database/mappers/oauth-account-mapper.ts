@@ -1,6 +1,6 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import { OauthAccountDrizzleModel } from '../schemas'
 import { OAuthAccountRecord } from '@/modules/auth/application/repositories/oauth-account-repository'
+import { OauthAccountDrizzleModel } from '../schemas'
 
 type ToPersistenceParams = OAuthAccountRecord & { createdAt: Date }
 

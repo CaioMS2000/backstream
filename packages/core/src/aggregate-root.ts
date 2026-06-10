@@ -1,6 +1,6 @@
-import type { UniqueId } from './unique-id'
 import type { DomainEvent } from './events/domain-event'
 import type { DomainEventDispatcher } from './events/domain-event-dispatcher'
+import type { UniqueId } from './unique-id'
 
 export abstract class AggregateRoot {
 	private _events: DomainEvent[] = []

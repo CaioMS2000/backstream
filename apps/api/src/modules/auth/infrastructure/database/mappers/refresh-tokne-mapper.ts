@@ -1,6 +1,6 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import { RefreshTokenDrizzleModel } from '../schemas'
 import { RefreshToken } from '@/modules/auth/domain/refresh-token'
+import { RefreshTokenDrizzleModel } from '../schemas'
 
 export class RefreshTokenMapper {
 	static toDomain(record: RefreshTokenDrizzleModel): RefreshToken {

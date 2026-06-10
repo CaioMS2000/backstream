@@ -1,8 +1,8 @@
+import { Result } from '@backstream/core'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
+import { EmailAlreadyRegisteredError } from '../../application/@errors'
 import { Role } from '../../domain/role'
 import { AuthenticatedUser } from '../types/authenticated-user'
-import { EmailAlreadyRegisteredError } from '../../application/@errors'
-import { Result } from '@backstream/core'
 
 export type CreateCredentialsCommandInput = {
 	email: string

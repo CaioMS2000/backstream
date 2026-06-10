@@ -1,5 +1,5 @@
-import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { failure, Result, success } from '@backstream/core/result'
+import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { EmailContainsAtRule } from './rules/email-contains-at-rule'
 import { EmailFormatRule } from './rules/email-format-rule'
 

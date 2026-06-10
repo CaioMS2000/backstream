@@ -1,6 +1,6 @@
-import type { RouteSchemas } from '../../types/route'
 import { z } from 'zod'
 import { errorSchema } from '../../responses'
+import type { RouteSchemas } from '../../types/route'
 
 const body = z.object({
 	name: z.string().min(2).max(300),

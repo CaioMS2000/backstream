@@ -1,6 +1,6 @@
+import { failure, Result, success } from '@backstream/core/result'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { CPFLengthRule } from './rules/cpf-length-rule'
-import { failure, Result, success } from '@backstream/core/result'
 
 export class CPF {
 	private constructor(public readonly value: string) {}

@@ -1,8 +1,8 @@
 // apps/api/src/shared/infrastructure/id-generator/index.ts
 import type { IdGenerator } from '@backstream/core/id-generator/id-generator'
+import { UniqueId } from '@backstream/core/unique-id'
 import { UUIDV4Generator } from './uuid-v4-generator'
 import { UUIDV7Generator } from './uuid-v7-generator'
-import { UniqueId } from '@backstream/core/unique-id'
 
 let impl: IdGenerator | null = null
 

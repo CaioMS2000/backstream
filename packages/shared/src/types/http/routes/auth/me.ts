@@ -1,6 +1,6 @@
+import { unauthorizedResponseSchema } from '../../responses'
 import type { RouteSchemas } from '../../types/route'
 import { userSchema } from '../../types/user'
-import { unauthorizedResponseSchema } from '../../responses'
 
 const response = {
 	200: userSchema,

@@ -1,4 +1,4 @@
-import { Result, failure, success } from './result'
+import { failure, Result, success } from './result'
 
 function doSomeThing(shouldSuccess: boolean): Result<string, number> {
 	if (shouldSuccess) {

@@ -1,4 +1,4 @@
-import { generateCodeVerifier, generateState, Google } from 'arctic'
+import { Google, generateCodeVerifier, generateState } from 'arctic'
 import { decodeJwt } from 'jose'
 import type { OAuthUserProfile } from '../oauth-types'
 import {

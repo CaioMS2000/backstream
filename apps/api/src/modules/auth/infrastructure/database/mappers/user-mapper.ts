@@ -1,8 +1,8 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import { UserDrizzleModel } from '../schemas'
+import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { User } from '@/modules/auth/domain/user'
 import { Email } from '@/shared/domain'
-import { InvalidValueError } from '@/@errors/invalid-value-error'
+import { UserDrizzleModel } from '../schemas'
 
 type ToPersistenceParams = User
 

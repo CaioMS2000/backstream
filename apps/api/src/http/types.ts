@@ -4,7 +4,7 @@ import type {
 	FastifySchema,
 	RouteGenericInterface,
 } from 'fastify'
-import type { z, ZodType } from 'zod'
+import type { ZodType, z } from 'zod'
 import type { AuthenticatedUser } from '@/modules/auth/public/types/authenticated-user'
 
 // -- inferência manual a partir do schema Zod --

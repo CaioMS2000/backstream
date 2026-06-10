@@ -1,12 +1,12 @@
+import { eq } from 'drizzle-orm'
 import {
 	OAuthStateData,
 	OAuthStateRepository,
 } from '@/modules/auth/application/repositories/oauth-state-repository'
-import { DbContext } from '@/shared/transaction/db-context'
 import { generateId } from '@/shared/infrastructure/id-generator'
-import { oauthState } from '../schemas'
-import { eq } from 'drizzle-orm'
+import { DbContext } from '@/shared/transaction/db-context'
 import { OauthStateMapper } from '../mappers/oauth-state-mapper'
+import { oauthState } from '../schemas'
 
 export class DrizzleOAuthStateRepository extends OAuthStateRepository {
 	constructor(private dbContext: DbContext) {

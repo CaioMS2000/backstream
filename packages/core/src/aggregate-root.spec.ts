@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AggregateRoot } from './aggregate-root'
-import { DomainEventDispatcher } from './events/domain-event-dispatcher'
 import type { DomainEvent } from './events/domain-event'
+import { DomainEventDispatcher } from './events/domain-event-dispatcher'
 import { UniqueId } from './unique-id'
 
 class TestEvent implements DomainEvent {

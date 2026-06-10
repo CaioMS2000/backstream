@@ -1,7 +1,7 @@
 // auth-factory.ts
 import type {
-	preHandlerAsyncHookHandler,
 	FastifySchema,
+	preHandlerAsyncHookHandler,
 	RouteHandlerMethod,
 	RouteShorthandOptions,
 } from 'fastify'

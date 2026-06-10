@@ -1,6 +1,6 @@
-import type { RouteSchemas } from '../../types/route'
 import { z } from 'zod'
 import { errorSchema, unauthorizedResponseSchema } from '../../responses'
+import type { RouteSchemas } from '../../types/route'
 
 const response = {
 	200: z.object({
