@@ -16,7 +16,7 @@ import { TokenIssuer } from './application/services/token-issuer'
 import { LoginUseCase } from './application/use-cases/login-use-case'
 import { LogoutUseCase } from './application/use-cases/logout-use-case'
 import { RefreshTokenUseCase } from './application/use-cases/refresh-token-use-case'
-import type { Role } from './domain/role'
+import { JwtAccessTokenVerifier } from './infrastructure/auth/jwt-access-token-verifier'
 import type { OAuthProviderService } from './infrastructure/auth/oauth-provider-service'
 import { UserSummaryQueryFromRepo } from './infrastructure/queries/user-summary-query-from-repo'
 import type { CreateCredentialsCommand } from './public/commands/create-credentials-command'
@@ -24,8 +24,7 @@ import type { CreateCredentialsFromProviderCommand } from './public/commands/cre
 import type { IssueTokensCommand } from './public/commands/issue-tokens-command'
 import type { TryLoginViaProviderCommand } from './public/commands/try-login-via-provider-command'
 import type { UserSummaryQuery } from './public/queries/user-summary-query'
-import { AccessTokenVerifier } from './public/services/access-token-verifier'
-import type { AuthenticatedUser } from './public/types/authenticated-user'
+import type { AccessTokenVerifier } from './public/services/access-token-verifier'
 
 export type AuthModuleDependencies = {
 	userRepository: UserRepository
@@ -77,21 +76,9 @@ export function buildAuthModule(deps: AuthModuleDependencies): AuthModule {
 
 	const userSummaryQuery = new UserSummaryQueryFromRepo(deps.userRepository)
 
-	const accessTokenVerifier: AccessTokenVerifier =
-		new (class extends AccessTokenVerifier {
-			async verify(token: string): Promise<AuthenticatedUser | null> {
-				const payload = await deps.jwtService.verifyAccessToken(token)
-				if (!payload) return null
-				if (typeof payload.sub !== 'string') return null
-				if (typeof payload.email !== 'string') return null
-				if (!Array.isArray(payload.roles)) return null
-				return {
-					userId: payload.sub,
-					email: payload.email,
-					roles: payload.roles as Role[],
-				}
-			}
-		})()
+	const accessTokenVerifier: AccessTokenVerifier = new JwtAccessTokenVerifier(
+		deps.jwtService
+	)
 
 	const tokenIssuer = new TokenIssuer({
 		jwtService: deps.jwtService,
