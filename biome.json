@@ -1,6 +1,9 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
 	"extends": ["@caioms/biomejs-config/biome"],
+	"files": {
+		"includes": ["!apps/api/coverage"]
+	},
 	"linter": {
 		"rules": {
 			"correctness": {
