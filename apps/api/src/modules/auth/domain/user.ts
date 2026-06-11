@@ -9,15 +9,32 @@ export class User extends AggregateRoot {
 	private constructor(
 		id: UniqueId,
 		readonly email: Email,
-		readonly roles: Role[],
+		private _roles: Role[],
 		private _revokedAt: Date | null,
 		readonly createdAt: Date
 	) {
 		super(id)
 	}
 
+	get roles(): Role[] {
+		return this._roles
+	}
+
 	get revokedAt(): Date | null {
 		return this._revokedAt
+	}
+
+	hasRole(role: Role): boolean {
+		return this._roles.includes(role)
+	}
+
+	addRole(role: Role): void {
+		if (this._roles.includes(role)) return
+		this._roles.push(role)
+	}
+
+	removeRole(role: Role): void {
+		this._roles = this._roles.filter(r => r !== role)
 	}
 
 	static async create(input: {

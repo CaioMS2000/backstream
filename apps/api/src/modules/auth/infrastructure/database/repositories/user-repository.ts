@@ -12,7 +12,17 @@ export class DrizzleUserRepository extends UserRepository {
 
 	async save(userData: User): Promise<void> {
 		const newRecord = UserMapper.toPersistence(userData)
-		await this.dbContext.current().insert(user).values(newRecord)
+		await this.dbContext
+			.current()
+			.insert(user)
+			.values(newRecord)
+			.onConflictDoUpdate({
+				target: user.id,
+				set: {
+					roles: newRecord.roles,
+					revokedAt: newRecord.revokedAt,
+				},
+			})
 	}
 
 	async findById(id: UniqueId): Promise<User | null> {
