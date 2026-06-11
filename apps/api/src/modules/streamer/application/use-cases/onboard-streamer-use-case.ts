@@ -2,6 +2,7 @@ import { DomainEventDispatcher } from '@backstream/core/events/domain-event-disp
 import { IntegrationEventBus } from '@backstream/core/events/integration-event-bus'
 import { failure, Result, success } from '@backstream/core/result'
 import type { UniqueId } from '@backstream/core/unique-id'
+import { Slug } from '@/shared/domain'
 import { now } from '@/shared/infrastructure/clock'
 import { UserSummaryQuery } from '../../../auth/public/queries/user-summary-query'
 import { Streamer } from '../../domain/streamer'
@@ -74,7 +75,7 @@ export class OnboardStreamerUseCase {
 		const streamer = await Streamer.create({
 			userId: input.userId,
 			displayName: input.displayName,
-			slug: input.slug,
+			slug: Slug.createFromText(input.slug),
 			pixKey: input.pixKey,
 		})
 
@@ -85,7 +86,7 @@ export class OnboardStreamerUseCase {
 			new StreamerOnboarded(
 				streamer.id,
 				streamer.props.userId,
-				streamer.props.slug,
+				streamer.props.slug.value,
 				streamer.props.displayName,
 				now()
 			)
@@ -93,7 +94,7 @@ export class OnboardStreamerUseCase {
 
 		return success({
 			streamerId: streamer.id,
-			slug: streamer.props.slug,
+			slug: streamer.props.slug.value,
 		})
 	}
 }

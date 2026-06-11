@@ -1,5 +1,6 @@
 import { UniqueId } from '@backstream/core/unique-id'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { Slug } from '@/shared/domain'
 import {
 	__resetClockForTests,
 	initializeClock,
@@ -17,7 +18,7 @@ async function makeStreamer(pixKey?: string): Promise<Streamer> {
 	return Streamer.create({
 		userId: UniqueId('user-1'),
 		displayName: 'Caio',
-		slug: 'caio',
+		slug: Slug.create('caio'),
 		pixKey,
 	})
 }

@@ -1,5 +1,6 @@
 import { AggregateRoot } from '@backstream/core/aggregate-root'
 import { UniqueId } from '@backstream/core/unique-id'
+import { Slug } from '@/shared/domain'
 import { now } from '@/shared/infrastructure/clock'
 import { generateId } from '@/shared/infrastructure/id-generator'
 import { PayoutChanged } from './events/payout-changed'
@@ -9,7 +10,7 @@ import { StreamerCreated } from './events/streamer-created'
 export type StreamerProps = {
 	userId: UniqueId
 	displayName: string
-	slug: string
+	slug: Slug
 	pixKey?: string
 }
 
@@ -37,7 +38,7 @@ export class Streamer extends AggregateRoot {
 			rightNow
 		)
 		streamer.addEvent(
-			new StreamerCreated(streamer.id, input.userId, input.slug, rightNow)
+			new StreamerCreated(streamer.id, input.userId, input.slug.value, rightNow)
 		)
 		return streamer
 	}
@@ -48,10 +49,10 @@ export class Streamer extends AggregateRoot {
 	}
 
 	changeSlug(newSlug: string): void {
-		if (newSlug === this.props.slug) return
+		if (newSlug === this.props.slug.value) return
 		const previousSlug = this.props.slug
-		this.props.slug = newSlug
-		this.addEvent(new SlugChanged(this.id, previousSlug, newSlug, now()))
+		this.props.slug = Slug.create(newSlug)
+		this.addEvent(new SlugChanged(this.id, previousSlug.value, newSlug, now()))
 	}
 
 	updatePixKey(newPixKey: string): void {
