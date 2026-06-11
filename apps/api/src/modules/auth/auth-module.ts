@@ -13,9 +13,11 @@ import type { PasswordCredentialRepository } from './application/repositories/pa
 import type { RefreshTokenRepository } from './application/repositories/refresh-token-repository'
 import type { UserRepository } from './application/repositories/user-repository'
 import { TokenIssuer } from './application/services/token-issuer'
+import { AddRoleUseCase } from './application/use-cases/add-role-use-case'
 import { LoginUseCase } from './application/use-cases/login-use-case'
 import { LogoutUseCase } from './application/use-cases/logout-use-case'
 import { RefreshTokenUseCase } from './application/use-cases/refresh-token-use-case'
+import { RemoveRoleUseCase } from './application/use-cases/remove-role-use-case'
 import { JwtAccessTokenVerifier } from './infrastructure/auth/jwt-access-token-verifier'
 import type { OAuthProviderService } from './infrastructure/auth/oauth-provider-service'
 import { UserSummaryQueryFromRepo } from './infrastructure/queries/user-summary-query-from-repo'
@@ -60,6 +62,8 @@ export type AuthModule = {
 		login: LoginUseCase
 		logout: LogoutUseCase
 		refreshToken: RefreshTokenUseCase
+		addRole: AddRoleUseCase
+		removeRole: RemoveRoleUseCase
 	}
 }
 
@@ -105,6 +109,11 @@ export function buildAuthModule(deps: AuthModuleDependencies): AuthModule {
 		tokenIssuer,
 	})
 
+	const addRole = new AddRoleUseCase({ userRepository: deps.userRepository })
+	const removeRole = new RemoveRoleUseCase({
+		userRepository: deps.userRepository,
+	})
+
 	const createCredentials = new CreateCredentialsCommandImpl({
 		userRepository: deps.userRepository,
 		passwordCredentialRepository: deps.passwordCredentialRepository,
@@ -146,6 +155,8 @@ export function buildAuthModule(deps: AuthModuleDependencies): AuthModule {
 			login,
 			logout,
 			refreshToken,
+			addRole,
+			removeRole,
 		},
 	}
 }

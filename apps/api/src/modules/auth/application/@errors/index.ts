@@ -1,4 +1,7 @@
+export { CannotRemoveLastRoleError } from './cannot-remove-last-role-error'
 export { EmailAlreadyRegisteredError } from './email-already-registered-error'
 export { InvalidCredentialsError } from './invalid-credentials-error'
 export { InvalidRefreshTokenError } from './invalid-refresh-token-error'
+export { RoleNotSelfAssignableError } from './role-not-self-assignable-error'
 export { TokenReplayDetectedError } from './token-replay-detected-error'
+export { UserNotFoundError } from './user-not-found-error'

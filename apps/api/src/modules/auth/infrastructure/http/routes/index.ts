@@ -6,6 +6,7 @@ import { LoginRoute } from './login'
 import { LogoutRoute } from './logout'
 import { MeRoute } from './me'
 import { RefreshTokenRoute } from './refresh-token'
+import { ManageRolesRoute } from './roles'
 import { GoogleSocialLoginStartRoute } from './social-login/google'
 
 type RegisterAuthRoutesDeps = {
@@ -40,6 +41,12 @@ export function registerAuthRoutes({
 	new RefreshTokenRoute({
 		app,
 		refreshTokenUseCase: authModule.useCases.refreshToken,
+	}).register()
+	new ManageRolesRoute({
+		app,
+		authed,
+		addRoleUseCase: authModule.useCases.addRole,
+		removeRoleUseCase: authModule.useCases.removeRole,
 	}).register()
 	new GoogleSocialLoginStartRoute({
 		app,
