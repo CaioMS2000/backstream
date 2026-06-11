@@ -4,7 +4,7 @@ Checklist operacional derivado do [escopo-mvp.md](escopo-mvp.md). Apenas os requ
 
 ## Cadastro e onboarding de streamer
 
-- [ ] Cadastro de streamer com email e senha
+- [ X ] Cadastro de streamer com email e senha
 - [ ] Configuração do nome público do streamer
 - [ ] Configuração do slug da página pública (`plataforma.com/seunome`)
 - [ ] Configuração da chave PIX do streamer para split
