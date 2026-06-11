@@ -68,7 +68,7 @@ describe('Streamer aggregate', () => {
 
 			streamer.changeSlug('novo-slug')
 
-			expect(streamer.props.slug).toBe('novo-slug')
+			expect(streamer.props.slug.value).toBe('novo-slug')
 			expect(streamer.events).toHaveLength(2)
 			const event = streamer.events[1] as SlugChanged
 			expect(event).toBeInstanceOf(SlugChanged)

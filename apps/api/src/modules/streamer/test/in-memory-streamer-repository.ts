@@ -19,6 +19,6 @@ export class InMemoryStreamerRepository extends StreamerRepository {
 	}
 
 	async findBySlug(slug: string): Promise<Streamer | null> {
-		return this.items.find(s => s.props.slug === slug) ?? null
+		return this.items.find(s => s.props.slug.value === slug) ?? null
 	}
 }

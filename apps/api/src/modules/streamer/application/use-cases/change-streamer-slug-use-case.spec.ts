@@ -55,7 +55,7 @@ describe('ChangeStreamerSlugUseCase', () => {
 		const result = await sut.execute({ userId, slug: 'caio-novo' })
 
 		expect(result.isSuccess()).toBe(true)
-		expect(streamerRepo.items[0].props.slug).toBe('caio-novo')
+		expect(streamerRepo.items[0].props.slug.value).toBe('caio-novo')
 		expect(handler).toHaveBeenCalledTimes(1)
 		const event = handler.mock.calls[0]?.[0]
 		expect(event).toBeInstanceOf(SlugChanged)
@@ -89,7 +89,7 @@ describe('ChangeStreamerSlugUseCase', () => {
 		if (result.isFailure()) {
 			expect(result.value).toBeInstanceOf(SlugAlreadyTakenError)
 		}
-		expect(streamerRepo.items[0].props.slug).toBe('caio')
+		expect(streamerRepo.items[0].props.slug.value).toBe('caio')
 	})
 
 	it('é no-op quando o slug é igual ao atual', async () => {

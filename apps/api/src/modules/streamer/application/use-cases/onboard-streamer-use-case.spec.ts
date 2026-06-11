@@ -96,7 +96,7 @@ describe('OnboardStreamerUseCase', () => {
 
 		expect(result.isSuccess()).toBe(true)
 		expect(streamerRepo.items).toHaveLength(1)
-		expect(streamerRepo.items[0].props.slug).toBe(baseInput.slug)
+		expect(streamerRepo.items[0].props.slug.value).toBe(baseInput.slug)
 		expect(streamerRepo.items[0].props.userId).toBe(userId)
 
 		expect(onboardedSubscriber).toHaveBeenCalledTimes(1)

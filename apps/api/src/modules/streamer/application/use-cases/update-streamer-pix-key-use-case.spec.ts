@@ -1,6 +1,7 @@
 import { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
 import { UniqueId } from '@backstream/core/unique-id'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { Slug } from '@/shared/domain'
 import {
 	__resetClockForTests,
 	initializeClock,
@@ -32,7 +33,7 @@ describe('UpdateStreamerPixKeyUseCase', () => {
 		const streamer = await Streamer.create({
 			userId,
 			displayName: 'Caio',
-			slug: 'caio',
+			slug: Slug.create('caio'),
 		})
 		streamerRepo.items.push(streamer)
 

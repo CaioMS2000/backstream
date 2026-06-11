@@ -33,7 +33,7 @@ export class ChangeStreamerSlugUseCase {
 			return failure(StreamerNotFoundError)
 		}
 
-		if (input.slug !== streamer.props.slug) {
+		if (input.slug !== streamer.props.slug.value) {
 			const existingBySlug = await this.props.streamerRepository.findBySlug(
 				input.slug
 			)
