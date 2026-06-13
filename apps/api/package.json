@@ -5,6 +5,7 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
+		"check-types": "clear && tsc --noEmit",
 		"dev": "clear && tsx watch ./index.ts",
 		"test": "vitest run",
 		"test:integration": "vitest run --config vitest.config.integration.ts",
