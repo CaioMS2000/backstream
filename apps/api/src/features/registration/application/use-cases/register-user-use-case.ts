@@ -5,6 +5,7 @@ import {
 	success,
 	UniqueId,
 } from '@backstream/core'
+import { UniqueUsernameProfileCreator } from '@/features/registration/application/unique-username-profile-creator'
 import { RegistrationCompleted } from '@/features/registration/public/events/registration-completed'
 import { AuthModule } from '@/modules/auth/auth-module'
 import {
@@ -13,11 +14,7 @@ import {
 } from '@/modules/auth/public/commands/create-credentials-command'
 import { IssueTokensCommandInput } from '@/modules/auth/public/commands/issue-tokens-command'
 import { AuthenticatedUser } from '@/modules/auth/public/types/authenticated-user'
-import { ProfileModule } from '@/modules/profile/profile-module'
-import {
-	CreateProfileCommandInput,
-	CreateProfileCommandOutput,
-} from '@/modules/profile/public/commands/create-profile-command'
+import { CreateProfileCommandOutput } from '@/modules/profile/public/commands/create-profile-command'
 import { IntegrationBusAfterCommit } from '@/shared/events/integration-bus-after-commit'
 import { now } from '@/shared/infrastructure/clock'
 import { generateId } from '@/shared/infrastructure/id-generator'
@@ -27,7 +24,7 @@ import { TransactionRunner } from '@/shared/transaction/transaction-runner'
 type Props = {
 	txRunner: TransactionRunner
 	auth: AuthModule
-	profile: ProfileModule
+	profileCreator: UniqueUsernameProfileCreator
 	eventsAfterCommit: IntegrationEventBus
 }
 
@@ -63,17 +60,21 @@ export class RegisterUserUseCase {
 				const { user } = credentialsResult.value
 				const { email, roles, userId } = user
 				const uniqueUserId = UniqueId(userId)
-				const createProfileInput: CreateProfileCommandInput = {
-					userId: uniqueUserId,
-					name: email.split('@')[0],
-					id: await generateId(),
-					now: rightNow,
-					phone: null,
-					avatarUrl: null,
-				}
+				const name = email.split('@')[0]
+				const profileId = await generateId()
 
-				const createProfileResult =
-					await this.profile.commands.createProfile.execute(createProfileInput)
+				const createProfileResult = await this.profileCreator.create(
+					name,
+					username => ({
+						userId: uniqueUserId,
+						name,
+						id: profileId,
+						now: rightNow,
+						phone: null,
+						avatarUrl: null,
+						username,
+					})
+				)
 
 				if (createProfileResult.isFailure()) {
 					throw new RegisterUserRollback(createProfileResult.value)
@@ -122,8 +123,8 @@ export class RegisterUserUseCase {
 		return this.props.txRunner
 	}
 
-	get profile() {
-		return this.props.profile
+	get profileCreator() {
+		return this.props.profileCreator
 	}
 
 	get auth() {

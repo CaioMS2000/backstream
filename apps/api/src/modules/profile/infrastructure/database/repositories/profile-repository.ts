@@ -21,6 +21,7 @@ export class DrizzleProfileRepository extends ProfileRepository {
 				target: profileSchema.userId,
 				set: {
 					name: record.name,
+					username: record.username,
 					phone: record.phone,
 					avatarUrl: record.avatarUrl,
 					updatedAt: record.updatedAt,
@@ -41,6 +42,16 @@ export class DrizzleProfileRepository extends ProfileRepository {
 	async findByPhone(phone: string): Promise<Profile | null> {
 		const record = await this.dbContext.current().query.profile.findFirst({
 			where: (profile, { eq }) => eq(profile.phone, phone),
+		})
+
+		if (!record) return null
+
+		return ProfileMapper.toDomain(record)
+	}
+
+	async findByUsername(username: string): Promise<Profile | null> {
+		const record = await this.dbContext.current().query.profile.findFirst({
+			where: (profile, { eq }) => eq(profile.username, username),
 		})
 
 		if (!record) return null

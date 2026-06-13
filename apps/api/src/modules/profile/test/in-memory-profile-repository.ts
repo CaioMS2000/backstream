@@ -27,4 +27,8 @@ export class InMemoryProfileRepository extends ProfileRepository {
 			}) ?? null
 		)
 	}
+
+	async findByUsername(username: string): Promise<Profile | null> {
+		return this.profiles.find(p => p.username.value === username) ?? null
+	}
 }

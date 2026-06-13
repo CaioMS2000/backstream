@@ -1,7 +1,7 @@
 import { DomainEventDispatcher, UniqueId } from '@backstream/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
-import { Phone } from '@/shared/domain'
+import { Phone, Username } from '@/shared/domain'
 import {
 	__resetClockForTests,
 	initializeClock,
@@ -60,6 +60,7 @@ describe('UpdateProfileUseCase', () => {
 			id: UniqueId(`profile-${opts.userId}`),
 			userId: UniqueId(opts.userId),
 			name: opts.name ?? 'Seeded Profile',
+			username: Username.__create(`user_${opts.userId}`),
 			phone: phoneResult.value,
 			avatarUrl: null,
 			createdAt: new Date(),

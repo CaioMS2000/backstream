@@ -107,6 +107,7 @@ describe('PUT /profile (integration)', () => {
 			id: opts.id,
 			userId: opts.userId,
 			name: opts.name ?? 'Seeded Profile',
+			username: `user_${opts.userId}`,
 			phone: opts.phone ?? null,
 		})
 	}

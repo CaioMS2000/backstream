@@ -11,7 +11,10 @@ import {
 } from '@/shared/infrastructure/id-generator'
 import { ProfileCreated } from '../../domain/events/profile-created'
 import { InMemoryProfileRepository } from '../../test/in-memory-profile-repository'
-import { PhoneAlreadyRegisteredError } from '../@errors'
+import {
+	PhoneAlreadyRegisteredError,
+	UsernameAlreadyTakenError,
+} from '../@errors'
 import { ProfileAlreadyExistsError } from '../@errors/profile-already-exists-error'
 import { CreateProfileUseCase } from './create-profile-use-case'
 
@@ -22,6 +25,7 @@ describe('CreateProfileUseCase', () => {
 
 	const baseInput = {
 		name: 'João Silva',
+		username: 'joao_silva',
 		phone: '5511987654321',
 		avatarUrl: null,
 		userId: 'user-1',
@@ -106,6 +110,32 @@ describe('CreateProfileUseCase', () => {
 			expect(result.value).toBeInstanceOf(InvalidValueError)
 		}
 		expect(profileRepo.profiles).toHaveLength(0)
+	})
+
+	it('deve falhar com InvalidValueError quando o username é inválido', async () => {
+		const result = await sut.execute({ ...baseInput, username: 'ab' })
+
+		expect(result.isFailure()).toBe(true)
+		if (result.isFailure()) {
+			expect(result.value).toBeInstanceOf(InvalidValueError)
+		}
+		expect(profileRepo.profiles).toHaveLength(0)
+	})
+
+	it('deve falhar com UsernameAlreadyTakenError quando o username já existe', async () => {
+		await sut.execute(baseInput)
+
+		const result = await sut.execute({
+			...baseInput,
+			userId: 'user-2',
+			phone: '5511999998888',
+		})
+
+		expect(result.isFailure()).toBe(true)
+		if (result.isFailure()) {
+			expect(result.value).toBeInstanceOf(UsernameAlreadyTakenError)
+		}
+		expect(profileRepo.profiles).toHaveLength(1)
 	})
 
 	it('deve disparar o domain event ProfileCreated', async () => {

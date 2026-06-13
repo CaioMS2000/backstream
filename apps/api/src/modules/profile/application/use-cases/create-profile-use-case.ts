@@ -6,11 +6,14 @@ import {
 	UniqueId,
 } from '@backstream/core'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
-import { Phone } from '@/shared/domain'
+import { Phone, Username } from '@/shared/domain'
 import { now } from '@/shared/infrastructure/clock'
 import { generateId } from '@/shared/infrastructure/id-generator'
 import { Profile } from '../../domain/profile'
-import { PhoneAlreadyRegisteredError } from '../@errors'
+import {
+	PhoneAlreadyRegisteredError,
+	UsernameAlreadyTakenError,
+} from '../@errors'
 import { ProfileAlreadyExistsError } from '../@errors/profile-already-exists-error'
 import { ProfileRepository } from '../repositories/profile-repository'
 
@@ -19,10 +22,14 @@ export type CreateProfileUseCaseRequest = {
 	phone: string | null
 	avatarUrl: string | null
 	userId: string
+	username: string
 }
 
 export type CreateProfileUseCaseResponse = Result<
-	PhoneAlreadyRegisteredError | ProfileAlreadyExistsError | InvalidValueError,
+	| PhoneAlreadyRegisteredError
+	| UsernameAlreadyTakenError
+	| ProfileAlreadyExistsError
+	| InvalidValueError,
 	{ profile: Profile }
 >
 
@@ -37,6 +44,10 @@ export class CreateProfileUseCase {
 	async execute(
 		input: CreateProfileUseCaseRequest
 	): Promise<CreateProfileUseCaseResponse> {
+		const usernameResult = Username.create(input.username)
+
+		if (usernameResult.isFailure()) return failure(usernameResult.value)
+
 		const phoneResult = Phone.createOptional(input.phone)
 
 		if (phoneResult.isFailure()) return failure(phoneResult.value)
@@ -56,10 +67,17 @@ export class CreateProfileUseCase {
 
 		if (existingProfile) return failure(ProfileAlreadyExistsError)
 
+		const existingUsername = await this.props.profileRepository.findByUsername(
+			usernameResult.value.value
+		)
+
+		if (existingUsername) return failure(UsernameAlreadyTakenError)
+
 		const profile = Profile.create({
 			id: await generateId(),
 			userId: UniqueId(input.userId),
 			name: input.name,
+			username: usernameResult.value,
 			phone,
 			avatarUrl: input.avatarUrl,
 			now: now(),

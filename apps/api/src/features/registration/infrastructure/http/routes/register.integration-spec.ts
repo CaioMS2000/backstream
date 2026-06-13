@@ -210,6 +210,7 @@ describe('POST /register (integration)', () => {
 		expect(profiles[0]).toMatchObject({
 			userId: users[0].id,
 			name: baseBody.email.split('@')[0],
+			username: 'caio',
 			phone: null,
 		})
 
@@ -218,6 +219,29 @@ describe('POST /register (integration)', () => {
 		expect(event).toBeInstanceOf(RegistrationCompleted)
 		expect(event.userId).toBe(users[0].id)
 		expect(event.email).toBe(baseBody.email)
+	})
+
+	it('deriva um username com sufixo quando o local part do email colide', async () => {
+		const first = await app.inject({
+			method: 'POST',
+			url: '/register',
+			payload: baseBody,
+		})
+		expect(first.statusCode).toBe(200)
+
+		const second = await app.inject({
+			method: 'POST',
+			url: '/register',
+			payload: { ...baseBody, email: 'caio@other.com' },
+		})
+		expect(second.statusCode).toBe(200)
+
+		const profiles = await db.select().from(profileTable)
+		expect(profiles).toHaveLength(2)
+
+		const usernames = profiles.map(p => p.username).sort()
+		expect(usernames[0]).toBe('caio')
+		expect(usernames[1]).toMatch(/^caio_[0-9a-f]+$/)
 	})
 
 	it('retorna 409 quando o email já está registrado', async () => {

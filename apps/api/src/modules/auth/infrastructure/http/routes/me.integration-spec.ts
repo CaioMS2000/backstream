@@ -104,6 +104,7 @@ describe('GET /me (integration)', () => {
 			id: 'profile-1',
 			userId: USER_ID,
 			name: 'Caio Tester',
+			username: 'caio_tester',
 			phone: null,
 			avatarUrl: null,
 		})

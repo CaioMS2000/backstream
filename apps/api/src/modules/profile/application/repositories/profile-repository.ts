@@ -5,4 +5,5 @@ export abstract class ProfileRepository {
 	abstract save(profile: Profile): Promise<void>
 	abstract findByUserId(userId: UniqueId): Promise<Profile | null>
 	abstract findByPhone(phone: string): Promise<Profile | null>
+	abstract findByUsername(username: string): Promise<Profile | null>
 }

@@ -5,6 +5,7 @@ import {
 	success,
 	UniqueId,
 } from '@backstream/core'
+import { UniqueUsernameProfileCreator } from '@/features/registration/application/unique-username-profile-creator'
 import { RegistrationCompleted } from '@/features/registration/public/events/registration-completed'
 import { AuthModule } from '@/modules/auth/auth-module'
 import {
@@ -13,7 +14,6 @@ import {
 } from '@/modules/auth/public/commands/create-credentials-from-provider-command'
 import { SocialUserRegistered } from '@/modules/auth/public/events/social-user-registered'
 import { AuthenticatedUser } from '@/modules/auth/public/types/authenticated-user'
-import { ProfileModule } from '@/modules/profile/profile-module'
 import { CreateProfileCommandOutput } from '@/modules/profile/public/commands/create-profile-command'
 import { IntegrationBusAfterCommit } from '@/shared/events/integration-bus-after-commit'
 import { now } from '@/shared/infrastructure/clock'
@@ -24,7 +24,7 @@ import { TransactionRunner } from '@/shared/transaction/transaction-runner'
 type Props = {
 	txRunner: TransactionRunner
 	auth: AuthModule
-	profile: ProfileModule
+	profileCreator: UniqueUsernameProfileCreator
 	eventsAfterCommit: IntegrationEventBus
 }
 
@@ -88,16 +88,20 @@ export class RegisterUserViaSocialUseCase {
 				const { user } = credentialsResult.value
 				const { email, roles, userId } = user
 				const uniqueUserId = UniqueId(userId)
+				const profileId = await generateId()
 
-				const createProfileResult =
-					await this.profile.commands.createProfile.execute({
+				const createProfileResult = await this.profileCreator.create(
+					input.name,
+					username => ({
 						userId: uniqueUserId,
 						name: input.name,
-						id: await generateId(),
+						id: profileId,
 						now: rightNow,
 						phone: null,
 						avatarUrl: null,
+						username,
 					})
+				)
 
 				if (createProfileResult.isFailure()) {
 					throw new RegisterUserViaSocialRollback(createProfileResult.value)
@@ -136,8 +140,8 @@ export class RegisterUserViaSocialUseCase {
 		return this.props.txRunner
 	}
 
-	get profile() {
-		return this.props.profile
+	get profileCreator() {
+		return this.props.profileCreator
 	}
 
 	get auth() {

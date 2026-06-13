@@ -152,6 +152,7 @@ describe('POST /login (integration)', () => {
 			id: 'profile-1',
 			userId,
 			name: 'Caio Tester',
+			username: 'caio_tester',
 			phone: null,
 			avatarUrl: null,
 		})

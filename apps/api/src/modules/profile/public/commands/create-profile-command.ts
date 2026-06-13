@@ -1,15 +1,23 @@
 import { Result } from '@backstream/core'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { Profile } from '@/modules/profile/domain/profile'
-import { PhoneAlreadyRegisteredError } from '../../application/@errors'
+import {
+	PhoneAlreadyRegisteredError,
+	UsernameAlreadyTakenError,
+} from '../../application/@errors'
 import { ProfileAlreadyExistsError } from '../../application/@errors/profile-already-exists-error'
+
+export { UsernameAlreadyTakenError } from '../../application/@errors'
 
 export type CreateProfileCommandInput = Omit<
 	Parameters<typeof Profile.create>[0],
-	'phone'
-> & { phone: string | null }
+	'phone' | 'username'
+> & { phone: string | null; username: string }
 export type CreateProfileCommandOutput = Result<
-	PhoneAlreadyRegisteredError | ProfileAlreadyExistsError | InvalidValueError,
+	| PhoneAlreadyRegisteredError
+	| UsernameAlreadyTakenError
+	| ProfileAlreadyExistsError
+	| InvalidValueError,
 	{
 		userId: string
 		name: string

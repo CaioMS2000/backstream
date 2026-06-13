@@ -1,6 +1,6 @@
 import { UniqueId } from '@backstream/core'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { Phone } from '@/shared/domain'
+import { Phone, Username } from '@/shared/domain'
 import { Profile } from '../../domain/profile'
 import { InMemoryProfileRepository } from '../../test/in-memory-profile-repository'
 import { ProfileSummaryQueryFromRepo } from './profile-summary-query-from-repo'
@@ -29,6 +29,7 @@ describe('ProfileSummaryQueryFromRepo', () => {
 			id: UniqueId(`profile-${opts.userId}`),
 			userId: UniqueId(opts.userId),
 			name: opts.name ?? 'Seeded Profile',
+			username: Username.__create(`user_${opts.userId}`),
 			phone: phoneResult.value,
 			avatarUrl: opts.avatarUrl ?? null,
 			createdAt: new Date(),

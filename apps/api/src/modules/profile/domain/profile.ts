@@ -1,11 +1,12 @@
 import { AggregateRoot, UniqueId } from '@backstream/core'
-import { Phone } from '@/shared/domain'
+import { Phone, Username } from '@/shared/domain'
 import { ProfileCreated } from './events/profile-created'
 import { ProfileUpdated } from './events/profile-updated'
 
 export type ProfileProps = {
 	userId: UniqueId
 	name: string
+	username: Username
 	phone: Phone | null
 	avatarUrl: string | null
 	createdAt: Date
@@ -28,6 +29,7 @@ export class Profile extends AggregateRoot {
 	static create(input: CreateInput): Profile {
 		const profile = new Profile(input.id, {
 			name: input.name,
+			username: input.username,
 			phone: input.phone,
 			avatarUrl: input.avatarUrl,
 			userId: input.userId,
@@ -70,6 +72,10 @@ export class Profile extends AggregateRoot {
 
 	get name(): string {
 		return this.props.name
+	}
+
+	get username(): Username {
+		return this.props.username
 	}
 
 	get phone(): Phone | null {
