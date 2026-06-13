@@ -35,6 +35,32 @@ export class Username {
 		return success(new Username(value))
 	}
 
+	/**
+	 * Receives any string and normalizes it into a valid username body.
+	 *
+	 * Lowercases, strips accents, turns separators (space, `.`, `-`, `+`) into
+	 * `_`, drops anything outside `[a-z0-9_]` and collapses/trims `_`.
+	 *
+	 * Example: "João.Silva+tag" => "joao_silva_tag"
+	 *
+	 * Does not guarantee `MIN_LENGTH`: callers that derive a username are
+	 * expected to append a unique suffix, which also fixes short results.
+	 *
+	 * @param text {string}
+	 */
+	static createFromText(text: string): Username {
+		const normalized = text
+			.normalize('NFKD')
+			.toLowerCase()
+			.trim()
+			.replace(/[\s.\-+]+/g, '_')
+			.replace(/[^a-z0-9_]+/g, '')
+			.replace(/_+/g, '_')
+			.replace(/^_+|_+$/g, '')
+
+		return new Username(normalized)
+	}
+
 	static __create(value: string) {
 		return new Username(value)
 	}
