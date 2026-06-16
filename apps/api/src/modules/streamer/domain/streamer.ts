@@ -19,24 +19,19 @@ type CreateInput = StreamerProps
 export class Streamer extends AggregateRoot {
 	private constructor(
 		id: UniqueId,
-		public props: StreamerProps,
-		readonly createdAt: Date
+		public props: StreamerProps
 	) {
 		super(id)
 	}
 
 	static async create(input: CreateInput): Promise<Streamer> {
 		const rightNow = now()
-		const streamer = new Streamer(
-			await generateId(),
-			{
-				userId: input.userId,
-				displayName: input.displayName,
-				slug: input.slug,
-				pixKey: input.pixKey,
-			},
-			rightNow
-		)
+		const streamer = new Streamer(await generateId(), {
+			userId: input.userId,
+			displayName: input.displayName,
+			slug: input.slug,
+			pixKey: input.pixKey,
+		})
 		streamer.addEvent(
 			new StreamerCreated(streamer.id, input.userId, input.slug.value, rightNow)
 		)
@@ -63,5 +58,16 @@ export class Streamer extends AggregateRoot {
 
 	canReceiveDonations(): boolean {
 		return this.props.pixKey !== undefined && this.props.pixKey.length > 0
+	}
+
+	static __create(input: CreateInput & { id: UniqueId }): Streamer {
+		const streamer = new Streamer(input.id, {
+			userId: input.userId,
+			displayName: input.displayName,
+			slug: input.slug,
+			pixKey: input.pixKey,
+		})
+
+		return streamer
 	}
 }
