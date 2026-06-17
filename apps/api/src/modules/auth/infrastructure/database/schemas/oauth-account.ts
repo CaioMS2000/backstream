@@ -5,7 +5,9 @@ export const oauthAccount = pgTable('oauth_account', {
 	userId: text('userId').notNull(),
 	provider: text('provider').notNull(),
 	providerAccountId: text('provider_account_id').notNull(),
-	createdAt: timestamp('created_at').notNull().defaultNow(),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+		.notNull()
+		.defaultNow(),
 })
 
 export type OauthAccountDrizzleModel = typeof oauthAccount.$inferSelect

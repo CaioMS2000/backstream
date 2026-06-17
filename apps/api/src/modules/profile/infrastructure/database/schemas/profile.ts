@@ -7,8 +7,10 @@ export const profile = pgTable('profile', {
 	username: text('username').notNull().unique(),
 	phone: text('phone').unique(),
 	avatarUrl: text('avatar_url'),
-	updatedAt: timestamp('updated_at'),
-	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+		.notNull()
+		.defaultNow(),
 })
 
 export type ProfileDrizzleModel = typeof profile.$inferSelect

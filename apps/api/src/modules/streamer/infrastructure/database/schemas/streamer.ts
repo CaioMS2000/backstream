@@ -6,8 +6,10 @@ export const streamer = pgTable('streamer', {
 	displayName: text('display_name').notNull(),
 	slug: text('slug').notNull().unique(),
 	pixKey: text('pix_key').unique(),
-	updatedAt: timestamp('updated_at'),
-	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+		.notNull()
+		.defaultNow(),
 })
 
 export type StreamerDrizzleModel = typeof streamer.$inferSelect

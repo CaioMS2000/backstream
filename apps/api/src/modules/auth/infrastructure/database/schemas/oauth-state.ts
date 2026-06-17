@@ -8,7 +8,9 @@ export const oauthState = pgTable('oauth_state', {
 	state: text('state').notNull(),
 	roles: text('roles', { enum: Role }).array().notNull(),
 	expiresInSeconds: integer('expires_in_seconds').notNull(),
-	createdAt: timestamp('created_at').notNull().defaultNow(),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+		.notNull()
+		.defaultNow(),
 })
 
 export type OauthStateDrizzleModel = typeof oauthState.$inferSelect
