@@ -1,17 +1,19 @@
 import { UniqueId } from '@backstream/core'
+import { ProfileNotFoundError } from '../application/@errors/profile-not-found-error'
 import { ProfileRepository } from '../application/repositories/profile-repository'
 import { Profile } from '../domain/profile'
 
 export class InMemoryProfileRepository extends ProfileRepository {
 	public profiles: Profile[] = []
 
-	async save(profile: Profile): Promise<void> {
+	async insert(profile: Profile): Promise<void> {
+		this.profiles.push(profile)
+	}
+
+	async update(profile: Profile): Promise<void> {
 		const index = this.profiles.findIndex(p => p.id === profile.id)
-		if (index !== -1) {
-			this.profiles[index] = profile
-		} else {
-			this.profiles.push(profile)
-		}
+		if (index === -1) throw new ProfileNotFoundError()
+		this.profiles[index] = profile
 	}
 
 	async findByUserId(userId: UniqueId): Promise<Profile | null> {

@@ -46,7 +46,7 @@ describe('TryLoginViaProviderCommand', () => {
 			email: baseInput.email,
 			roles: ['donor'],
 		})
-		await oauthAccountRepo.save({
+		await oauthAccountRepo.insert({
 			userId: user.id,
 			provider: baseInput.provider,
 			providerAccountId: baseInput.providerAccountId,

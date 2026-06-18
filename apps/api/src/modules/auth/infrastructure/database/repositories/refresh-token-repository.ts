@@ -11,7 +11,7 @@ export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
 		super()
 	}
 
-	async save(token: RefreshToken): Promise<void> {
+	async insert(token: RefreshToken): Promise<void> {
 		const newRecord = RefreshTokenMapper.toPersistence(token)
 		await this.dbContext.current().insert(refreshToken).values(newRecord)
 	}

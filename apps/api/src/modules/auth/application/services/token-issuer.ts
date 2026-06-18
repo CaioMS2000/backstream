@@ -38,7 +38,7 @@ export class TokenIssuer {
 			REFRESH_TOKEN_EXPIRY_SECONDS
 		)
 
-		await this.props.refreshTokenRepository.save(refreshToken)
+		await this.props.refreshTokenRepository.insert(refreshToken)
 
 		return {
 			accessToken,

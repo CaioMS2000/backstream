@@ -136,7 +136,7 @@ describe('GET /social-login/google/callback (integration)', () => {
 	})
 
 	async function seedState(state: string, provider = 'google') {
-		await oauthStateRepository.save(
+		await oauthStateRepository.insert(
 			state,
 			{ codeVerifier: 'verifier-1', provider, role: 'donor' },
 			600

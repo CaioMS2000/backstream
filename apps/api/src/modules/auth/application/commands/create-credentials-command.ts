@@ -54,7 +54,7 @@ export class CreateCredentialsCommandImpl extends CreateCredentialsCommand {
 			now: now(),
 		})
 
-		await this.userRepository.save(user)
+		await this.userRepository.insert(user)
 
 		const passwordHash = await this.hashGenerator.hash(input.password)
 		const passwordCredential = await PasswordCredential.create({
@@ -63,7 +63,7 @@ export class CreateCredentialsCommandImpl extends CreateCredentialsCommand {
 			now: now(),
 		})
 
-		await this.passwordCredentialRepository.save(passwordCredential)
+		await this.passwordCredentialRepository.insert(passwordCredential)
 
 		return success({
 			user: {

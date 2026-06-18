@@ -1,17 +1,21 @@
 import { UniqueId } from '@backstream/core/unique-id'
+import { UserNotFoundError } from '../application/@errors'
 import { UserRepository } from '../application/repositories/user-repository'
 import { User } from '../domain/user'
 
 export class InMemoryUserRepository extends UserRepository {
 	public items: User[] = []
 
-	async save(user: User): Promise<void> {
+	async insert(user: User): Promise<void> {
+		this.items.push(user)
+	}
+
+	async update(user: User): Promise<void> {
 		const index = this.items.findIndex(u => u.id === user.id)
-		if (index >= 0) {
-			this.items[index] = user
-		} else {
-			this.items.push(user)
+		if (index < 0) {
+			throw new UserNotFoundError()
 		}
+		this.items[index] = user
 	}
 
 	async findById(id: UniqueId): Promise<User | null> {

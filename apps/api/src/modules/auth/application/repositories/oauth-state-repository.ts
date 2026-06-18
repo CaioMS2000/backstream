@@ -1,17 +1,11 @@
-import { Role } from '../../domain/role'
-
-export type OAuthStateData = {
-	codeVerifier: string
-	provider: string
-	role: Role
-}
+import { OAuthStateRecord } from '../oauth-state-record'
 
 export abstract class OAuthStateRepository {
-	abstract save(
+	abstract insert(
 		state: string,
-		data: OAuthStateData,
+		data: OAuthStateRecord,
 		expiresInSeconds: number
 	): Promise<void>
 
-	abstract findAndDelete(state: string): Promise<OAuthStateData | null>
+	abstract findAndDelete(state: string): Promise<OAuthStateRecord | null>
 }

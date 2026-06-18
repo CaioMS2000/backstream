@@ -1,8 +1,6 @@
 import { eq } from 'drizzle-orm'
-import {
-	OAuthStateData,
-	OAuthStateRepository,
-} from '@/modules/auth/application/repositories/oauth-state-repository'
+import { OAuthStateRecord } from '@/modules/auth/application/oauth-state-record'
+import { OAuthStateRepository } from '@/modules/auth/application/repositories/oauth-state-repository'
 import { generateId } from '@/shared/infrastructure/id-generator'
 import { DbContext } from '@/shared/transaction/db-context'
 import { OauthStateMapper } from '../mappers/oauth-state-mapper'
@@ -13,9 +11,9 @@ export class DrizzleOAuthStateRepository extends OAuthStateRepository {
 		super()
 	}
 
-	async save(
+	async insert(
 		state: string,
-		data: OAuthStateData,
+		data: OAuthStateRecord,
 		expiresInSeconds: number
 	): Promise<void> {
 		await this.dbContext
@@ -31,7 +29,7 @@ export class DrizzleOAuthStateRepository extends OAuthStateRepository {
 			})
 	}
 
-	async findAndDelete(state: string): Promise<OAuthStateData | null> {
+	async findAndDelete(state: string): Promise<OAuthStateRecord | null> {
 		const db = this.dbContext.current()
 
 		const record = await db.query.oauthState.findFirst({

@@ -1,4 +1,6 @@
 import { UniqueId } from '@backstream/core/unique-id'
+import { eq } from 'drizzle-orm'
+import { UserNotFoundError } from '@/modules/auth/application/@errors'
 import { UserRepository } from '@/modules/auth/application/repositories/user-repository'
 import { User } from '@/modules/auth/domain/user'
 import { DbContext } from '@/shared/transaction/db-context'
@@ -10,19 +12,29 @@ export class DrizzleUserRepository extends UserRepository {
 		super()
 	}
 
-	async save(userData: User): Promise<void> {
+	get drizzle() {
+		return this.dbContext.current()
+	}
+
+	async insert(userData: User): Promise<void> {
 		const newRecord = UserMapper.toPersistence(userData)
-		await this.dbContext
-			.current()
-			.insert(user)
-			.values(newRecord)
-			.onConflictDoUpdate({
-				target: user.id,
-				set: {
-					roles: newRecord.roles,
-					revokedAt: newRecord.revokedAt,
-				},
+		await this.drizzle.insert(user).values(newRecord)
+	}
+
+	async update(userData: User): Promise<void> {
+		const updated = await this.drizzle
+			.update(user)
+			.set({
+				email: userData.email.value,
+				roles: userData.roles,
+				revokedAt: userData.revokedAt,
 			})
+			.where(eq(user.id, userData.id))
+			.returning()
+
+		if (updated.length === 0) {
+			throw new UserNotFoundError()
+		}
 	}
 
 	async findById(id: UniqueId): Promise<User | null> {

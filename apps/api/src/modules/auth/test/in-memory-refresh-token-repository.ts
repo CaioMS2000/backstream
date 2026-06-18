@@ -7,7 +7,7 @@ export class InMemoryRefreshTokenRepository extends RefreshTokenRepository {
 	public items: RefreshToken[] = []
 	private usedHashes = new Set<string>()
 
-	async save(token: RefreshToken): Promise<void> {
+	async insert(token: RefreshToken): Promise<void> {
 		this.items.push(token)
 	}
 

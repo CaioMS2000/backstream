@@ -35,8 +35,8 @@ export class CreateCredentialsFromProviderCommandImpl extends CreateCredentialsF
 			now: now(),
 		})
 
-		await this.props.userRepository.save(user)
-		await this.props.oauthAccountRepository.save({
+		await this.props.userRepository.insert(user)
+		await this.props.oauthAccountRepository.insert({
 			userId: user.id,
 			provider: input.provider,
 			providerAccountId: input.providerAccountId,

@@ -79,7 +79,7 @@ export class OnboardStreamerUseCase {
 			pixKey: input.pixKey,
 		})
 
-		await this.props.streamerRepository.save(streamer)
+		await this.props.streamerRepository.insert(streamer)
 
 		await streamer.dispatchDomainEvents(this.props.domainEvents)
 		await this.props.integrationBus.publish(

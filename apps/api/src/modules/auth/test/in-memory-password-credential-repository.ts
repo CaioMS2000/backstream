@@ -5,7 +5,7 @@ import { PasswordCredential } from '../domain/password-credential'
 export class InMemoryPasswordCredentialRepository extends PasswordCredentialRepository {
 	public items: PasswordCredential[] = []
 
-	async save(credential: PasswordCredential): Promise<void> {
+	async insert(credential: PasswordCredential): Promise<void> {
 		const index = this.items.findIndex(c => c.userId === credential.userId)
 		if (index >= 0) {
 			this.items[index] = credential

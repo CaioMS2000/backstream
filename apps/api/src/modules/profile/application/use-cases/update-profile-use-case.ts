@@ -58,7 +58,7 @@ export class UpdateProfileUseCase {
 
 		existingProfile.updateDetails({ name: input.name, phone, now: now() })
 
-		await this.props.profileRepository.save(existingProfile)
+		await this.props.profileRepository.update(existingProfile)
 		await existingProfile.dispatchDomainEvents(this.props.domainEvents)
 
 		return success({ profile: existingProfile })

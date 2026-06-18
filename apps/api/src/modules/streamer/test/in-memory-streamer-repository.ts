@@ -1,17 +1,19 @@
 import type { UniqueId } from '@backstream/core/unique-id'
+import { StreamerNotFoundError } from '../application/@errors'
 import { StreamerRepository } from '../application/repositories/streamer-repository'
 import type { Streamer } from '../domain/streamer'
 
 export class InMemoryStreamerRepository extends StreamerRepository {
 	public items: Streamer[] = []
 
-	async save(streamer: Streamer): Promise<void> {
+	async insert(streamer: Streamer): Promise<void> {
+		this.items.push(streamer)
+	}
+
+	async update(streamer: Streamer): Promise<void> {
 		const index = this.items.findIndex(s => s.id === streamer.id)
-		if (index >= 0) {
-			this.items[index] = streamer
-		} else {
-			this.items.push(streamer)
-		}
+		if (index < 0) throw new StreamerNotFoundError()
+		this.items[index] = streamer
 	}
 
 	async findByUserId(userId: UniqueId): Promise<Streamer | null> {

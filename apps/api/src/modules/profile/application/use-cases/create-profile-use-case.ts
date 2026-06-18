@@ -83,7 +83,7 @@ export class CreateProfileUseCase {
 			now: now(),
 		})
 
-		await this.props.profileRepository.save(profile)
+		await this.props.profileRepository.insert(profile)
 		await profile.dispatchDomainEvents(this.props.domainEvents)
 
 		return success({ profile })

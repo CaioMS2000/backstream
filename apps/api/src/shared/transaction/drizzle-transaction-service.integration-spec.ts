@@ -74,7 +74,7 @@ describe('DrizzleTransactionService (integration)', () => {
 
 	it('persiste fora de run() — caminho default da conexão', async () => {
 		const user = await makeUser()
-		await userRepository.save(user)
+		await userRepository.insert(user)
 
 		const rows = await db.select().from(userTable)
 		expect(rows).toHaveLength(1)
@@ -85,7 +85,7 @@ describe('DrizzleTransactionService (integration)', () => {
 		const user = await makeUser()
 
 		await txService.run(async () => {
-			await userRepository.save(user)
+			await userRepository.insert(user)
 		})
 
 		const rows = await db.select().from(userTable)
@@ -98,7 +98,7 @@ describe('DrizzleTransactionService (integration)', () => {
 
 		await expect(
 			txService.run(async () => {
-				await userRepository.save(user)
+				await userRepository.insert(user)
 				throw new Error('boom')
 			})
 		).rejects.toThrow('boom')
@@ -118,8 +118,8 @@ describe('DrizzleTransactionService (integration)', () => {
 
 		await expect(
 			txService.run(async () => {
-				await userRepository.save(user)
-				await passwordCredentialRepository.save(credential)
+				await userRepository.insert(user)
+				await passwordCredentialRepository.insert(credential)
 				throw new Error('boom')
 			})
 		).rejects.toThrow('boom')
@@ -139,8 +139,8 @@ describe('DrizzleTransactionService (integration)', () => {
 		})
 
 		await txService.run(async () => {
-			await userRepository.save(user)
-			await passwordCredentialRepository.save(credential)
+			await userRepository.insert(user)
+			await passwordCredentialRepository.insert(credential)
 		})
 
 		const users = await db.select().from(userTable)

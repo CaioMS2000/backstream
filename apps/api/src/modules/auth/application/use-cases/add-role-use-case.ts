@@ -33,7 +33,7 @@ export class AddRoleUseCase {
 		if (!user) return failure(UserNotFoundError)
 
 		user.addRole(role)
-		await this.props.userRepository.save(user)
+		await this.props.userRepository.update(user)
 
 		return success({ roles: user.roles })
 	}

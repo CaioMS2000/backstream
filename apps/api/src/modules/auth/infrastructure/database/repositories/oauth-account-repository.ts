@@ -1,8 +1,6 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import {
-	OAuthAccountRecord,
-	OAuthAccountRepository,
-} from '@/modules/auth/application/repositories/oauth-account-repository'
+import { OAuthAccountRecord } from '@/modules/auth/application/oauth-account-record'
+import { OAuthAccountRepository } from '@/modules/auth/application/repositories/oauth-account-repository'
 import { generateId } from '@/shared/infrastructure/id-generator'
 import { DbContext } from '@/shared/transaction/db-context'
 import { OauthAccountMapper } from '../mappers/oauth-account-mapper'
@@ -30,7 +28,7 @@ export class DrizzleOAuthAccountRepository extends OAuthAccountRepository {
 		return OauthAccountMapper.toDomain(record)
 	}
 
-	async save(data: {
+	async insert(data: {
 		userId: UniqueId
 		provider: string
 		providerAccountId: string

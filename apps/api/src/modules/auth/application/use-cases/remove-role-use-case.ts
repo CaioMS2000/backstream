@@ -39,7 +39,7 @@ export class RemoveRoleUseCase {
 		}
 
 		user.removeRole(role)
-		await this.props.userRepository.save(user)
+		await this.props.userRepository.update(user)
 
 		return success({ roles: user.roles })
 	}

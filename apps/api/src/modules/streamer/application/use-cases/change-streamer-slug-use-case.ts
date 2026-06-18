@@ -43,7 +43,7 @@ export class ChangeStreamerSlugUseCase {
 		}
 
 		streamer.changeSlug(input.slug)
-		await this.props.streamerRepository.save(streamer)
+		await this.props.streamerRepository.update(streamer)
 		await streamer.dispatchDomainEvents(this.props.domainEvents)
 
 		return success(undefined)

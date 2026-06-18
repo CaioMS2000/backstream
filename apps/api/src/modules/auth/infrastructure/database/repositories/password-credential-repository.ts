@@ -10,7 +10,7 @@ export class DrizzlePasswordCredentialRepository extends PasswordCredentialRepos
 		super()
 	}
 
-	async save(credential: PasswordCredential): Promise<void> {
+	async insert(credential: PasswordCredential): Promise<void> {
 		await this.dbContext.current().insert(passwordCredential).values({
 			id: credential.id,
 			userId: credential.userId,

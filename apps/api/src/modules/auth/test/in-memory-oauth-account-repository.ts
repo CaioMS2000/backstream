@@ -1,8 +1,6 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import {
-	OAuthAccountRecord,
-	OAuthAccountRepository,
-} from '../application/repositories/oauth-account-repository'
+import { OAuthAccountRecord } from '../application/oauth-account-record'
+import { OAuthAccountRepository } from '../application/repositories/oauth-account-repository'
 
 export class InMemoryOAuthAccountRepository extends OAuthAccountRepository {
 	public items: OAuthAccountRecord[] = []
@@ -21,7 +19,7 @@ export class InMemoryOAuthAccountRepository extends OAuthAccountRepository {
 		)
 	}
 
-	async save(data: {
+	async insert(data: {
 		userId: UniqueId
 		provider: string
 		providerAccountId: string

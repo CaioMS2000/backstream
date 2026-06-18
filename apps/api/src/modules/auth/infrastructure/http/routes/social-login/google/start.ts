@@ -34,7 +34,7 @@ export class GoogleSocialLoginStartRoute {
 						.send({ error: 'Provider config missing PKCE' })
 				}
 
-				await this.props.oauthStateRepository.save(
+				await this.props.oauthStateRepository.insert(
 					state,
 					{ codeVerifier, provider: 'google', role: body.role },
 					OAUTH_STATE_EXPIRY_SECONDS

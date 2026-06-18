@@ -1,4 +1,6 @@
 import { UniqueId } from '@backstream/core'
+import { eq } from 'drizzle-orm'
+import { ProfileNotFoundError } from '@/modules/profile/application/@errors/profile-not-found-error'
 import { ProfileRepository } from '@/modules/profile/application/repositories/profile-repository'
 import { Profile } from '@/modules/profile/domain/profile'
 import { DbContext } from '@/shared/transaction/db-context'
@@ -10,23 +12,31 @@ export class DrizzleProfileRepository extends ProfileRepository {
 		super()
 	}
 
-	async save(profile: Profile): Promise<void> {
+	async insert(profile: Profile): Promise<void> {
 		const record = ProfileMapper.toPersistence(profile)
 
-		await this.dbContext
+		await this.dbContext.current().insert(profileSchema).values(record)
+	}
+
+	async update(profile: Profile): Promise<void> {
+		const record = ProfileMapper.toPersistence(profile)
+
+		const updated = await this.dbContext
 			.current()
-			.insert(profileSchema)
-			.values(record)
-			.onConflictDoUpdate({
-				target: profileSchema.userId,
-				set: {
-					name: record.name,
-					username: record.username,
-					phone: record.phone,
-					avatarUrl: record.avatarUrl,
-					updatedAt: record.updatedAt,
-				},
+			.update(profileSchema)
+			.set({
+				name: record.name,
+				username: record.username,
+				phone: record.phone,
+				avatarUrl: record.avatarUrl,
+				updatedAt: record.updatedAt,
 			})
+			.where(eq(profileSchema.id, record.id))
+			.returning()
+
+		if (updated.length === 0) {
+			throw new ProfileNotFoundError()
+		}
 	}
 
 	async findByUserId(userId: UniqueId): Promise<Profile | null> {

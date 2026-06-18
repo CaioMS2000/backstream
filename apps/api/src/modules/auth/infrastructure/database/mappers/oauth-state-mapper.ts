@@ -1,8 +1,8 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import { OAuthStateData } from '@/modules/auth/application/repositories/oauth-state-repository'
+import { OAuthStateRecord } from '@/modules/auth/application/oauth-state-record'
 import { OauthStateDrizzleModel } from '../schemas'
 
-type ToPersistenceParams = OAuthStateData & {
+type ToPersistenceParams = OAuthStateRecord & {
 	id: UniqueId
 	state: string
 	expiresInSeconds: number
@@ -10,7 +10,7 @@ type ToPersistenceParams = OAuthStateData & {
 }
 
 export class OauthStateMapper {
-	static toDomain(record: OauthStateDrizzleModel): OAuthStateData {
+	static toDomain(record: OauthStateDrizzleModel): OAuthStateRecord {
 		return {
 			codeVerifier: record.codeVerifier,
 			provider: record.provider,

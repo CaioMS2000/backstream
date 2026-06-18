@@ -8,7 +8,7 @@ import { Role } from './role'
 export class User extends AggregateRoot {
 	private constructor(
 		id: UniqueId,
-		readonly email: Email,
+		private _email: Email,
 		private _roles: Role[],
 		private _revokedAt: Date | null,
 		readonly createdAt: Date
@@ -18,6 +18,10 @@ export class User extends AggregateRoot {
 
 	get roles(): Role[] {
 		return this._roles
+	}
+
+	get email() {
+		return this._email
 	}
 
 	get revokedAt(): Date | null {
@@ -78,5 +82,9 @@ export class User extends AggregateRoot {
 	revoke(now: Date): void {
 		if (this._revokedAt !== null) return
 		this._revokedAt = now
+	}
+
+	changeEmail(newEmail: Email): void {
+		this._email = newEmail
 	}
 }
