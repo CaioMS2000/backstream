@@ -13,4 +13,22 @@ export class StreamerMapper {
 			pixKey: record.pixKey ?? undefined,
 		})
 	}
+
+	static toInsertColumns(streamer: Streamer) {
+		return {
+			id: streamer.id,
+			userId: streamer.userId,
+			displayName: streamer.displayName,
+			slug: streamer.slug.value,
+			pixKey: streamer.pixKey ?? null,
+		}
+	}
+
+	static toUpdateColumns(streamer: Streamer) {
+		return {
+			displayName: streamer.displayName,
+			slug: streamer.slug.value,
+			pixKey: streamer.pixKey ?? null,
+		}
+	}
 }
