@@ -24,6 +24,22 @@ export class Streamer extends AggregateRoot {
 		super(id)
 	}
 
+	get userId() {
+		return this.props.userId
+	}
+
+	get displayName() {
+		return this.props.displayName
+	}
+
+	get slug() {
+		return this.props.slug
+	}
+
+	get pixKey() {
+		return this.props.pixKey
+	}
+
 	static async create(input: CreateInput): Promise<Streamer> {
 		const rightNow = now()
 		const streamer = new Streamer(await generateId(), {
