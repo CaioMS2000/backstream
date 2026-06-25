@@ -1,4 +1,5 @@
 import { UniqueId } from '@backstream/core'
+import { Phone, Username } from '@/shared/domain'
 import { ProfileNotFoundError } from '../application/@errors/profile-not-found-error'
 import { ProfileRepository } from '../application/repositories/profile-repository'
 import { Profile } from '../domain/profile'
@@ -20,17 +21,11 @@ export class InMemoryProfileRepository extends ProfileRepository {
 		return this.profiles.find(p => p.userId === userId) ?? null
 	}
 
-	async findByPhone(phone: string): Promise<Profile | null> {
-		return (
-			this.profiles.find(p => {
-				if (p.phone === null) return false
-
-				return p.phone.value === phone
-			}) ?? null
-		)
+	async findByPhone(phone: Phone): Promise<Profile | null> {
+		return this.profiles.find(p => p.phone?.equals(phone) ?? false) ?? null
 	}
 
-	async findByUsername(username: string): Promise<Profile | null> {
-		return this.profiles.find(p => p.username.value === username) ?? null
+	async findByUsername(username: Username): Promise<Profile | null> {
+		return this.profiles.find(p => p.username.equals(username)) ?? null
 	}
 }

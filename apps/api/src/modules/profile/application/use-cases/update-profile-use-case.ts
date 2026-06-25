@@ -48,9 +48,8 @@ export class UpdateProfileUseCase {
 		const phone = phoneResult.value
 
 		if (phone) {
-			const existingPhone = await this.props.profileRepository.findByPhone(
-				phone.value
-			)
+			const existingPhone =
+				await this.props.profileRepository.findByPhone(phone)
 
 			if (existingPhone && existingPhone.userId !== existingProfile.userId)
 				return failure(PhoneAlreadyRegisteredError)

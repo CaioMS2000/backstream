@@ -55,9 +55,8 @@ export class CreateProfileUseCase {
 		const phone = phoneResult.value
 
 		if (phone) {
-			const existingPhone = await this.props.profileRepository.findByPhone(
-				phone.value
-			)
+			const existingPhone =
+				await this.props.profileRepository.findByPhone(phone)
 			if (existingPhone) return failure(PhoneAlreadyRegisteredError)
 		}
 
@@ -68,7 +67,7 @@ export class CreateProfileUseCase {
 		if (existingProfile) return failure(ProfileAlreadyExistsError)
 
 		const existingUsername = await this.props.profileRepository.findByUsername(
-			usernameResult.value.value
+			usernameResult.value
 		)
 
 		if (existingUsername) return failure(UsernameAlreadyTakenError)

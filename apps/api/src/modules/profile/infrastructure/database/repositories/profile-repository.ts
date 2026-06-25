@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { ProfileNotFoundError } from '@/modules/profile/application/@errors/profile-not-found-error'
 import { ProfileRepository } from '@/modules/profile/application/repositories/profile-repository'
 import { Profile } from '@/modules/profile/domain/profile'
+import { Phone, Username } from '@/shared/domain'
 import { DbContext } from '@/shared/transaction/db-context'
 import { ProfileMapper } from '../mappers/profile-mapper'
 import { profile as profileSchema } from '../schemas'
@@ -41,9 +42,9 @@ export class DrizzleProfileRepository extends ProfileRepository {
 		return ProfileMapper.toDomain(record)
 	}
 
-	async findByPhone(phone: string): Promise<Profile | null> {
+	async findByPhone(phone: Phone): Promise<Profile | null> {
 		const record = await this.dbContext.current().query.profile.findFirst({
-			where: (profile, { eq }) => eq(profile.phone, phone),
+			where: (profile, { eq }) => eq(profile.phone, phone.value),
 		})
 
 		if (!record) return null
@@ -51,9 +52,9 @@ export class DrizzleProfileRepository extends ProfileRepository {
 		return ProfileMapper.toDomain(record)
 	}
 
-	async findByUsername(username: string): Promise<Profile | null> {
+	async findByUsername(username: Username): Promise<Profile | null> {
 		const record = await this.dbContext.current().query.profile.findFirst({
-			where: (profile, { eq }) => eq(profile.username, username),
+			where: (profile, { eq }) => eq(profile.username, username.value),
 		})
 
 		if (!record) return null

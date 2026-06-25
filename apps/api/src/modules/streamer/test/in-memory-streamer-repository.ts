@@ -1,4 +1,5 @@
 import type { UniqueId } from '@backstream/core/unique-id'
+import type { Slug } from '@/shared/domain'
 import { StreamerNotFoundError } from '../application/@errors'
 import { StreamerRepository } from '../application/repositories/streamer-repository'
 import type { Streamer } from '../domain/streamer'
@@ -20,7 +21,7 @@ export class InMemoryStreamerRepository extends StreamerRepository {
 		return this.items.find(s => s.props.userId === userId) ?? null
 	}
 
-	async findBySlug(slug: string): Promise<Streamer | null> {
-		return this.items.find(s => s.props.slug.value === slug) ?? null
+	async findBySlug(slug: Slug): Promise<Streamer | null> {
+		return this.items.find(s => s.props.slug.equals(slug)) ?? null
 	}
 }

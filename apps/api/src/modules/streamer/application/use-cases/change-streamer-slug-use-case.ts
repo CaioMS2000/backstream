@@ -1,6 +1,7 @@
 import type { DomainEventDispatcher } from '@backstream/core/events/domain-event-dispatcher'
 import { failure, type Result, success } from '@backstream/core/result'
 import type { UniqueId } from '@backstream/core/unique-id'
+import { Slug } from '@/shared/domain'
 import { SlugAlreadyTakenError, StreamerNotFoundError } from '../@errors'
 import type { StreamerRepository } from '../repositories/streamer-repository'
 
@@ -33,10 +34,11 @@ export class ChangeStreamerSlugUseCase {
 			return failure(StreamerNotFoundError)
 		}
 
-		if (input.slug !== streamer.props.slug.value) {
-			const existingBySlug = await this.props.streamerRepository.findBySlug(
-				input.slug
-			)
+		const newSlug = Slug.create(input.slug)
+
+		if (!newSlug.equals(streamer.props.slug)) {
+			const existingBySlug =
+				await this.props.streamerRepository.findBySlug(newSlug)
 			if (existingBySlug && existingBySlug.id !== streamer.id) {
 				return failure(SlugAlreadyTakenError)
 			}

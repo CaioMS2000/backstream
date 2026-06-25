@@ -55,25 +55,25 @@ export class Streamer extends AggregateRoot {
 	}
 
 	rename(displayName: string): void {
-		if (displayName === this.props.displayName) return
+		if (displayName === this.displayName) return
 		this.props.displayName = displayName
 	}
 
 	changeSlug(newSlug: string): void {
-		if (newSlug === this.props.slug.value) return
-		const previousSlug = this.props.slug
-		this.props.slug = Slug.create(newSlug)
+		if (newSlug === this.slug.value) return
+		const previousSlug = this.slug
+		this.props.slug = Slug.createFromText(newSlug)
 		this.addEvent(new SlugChanged(this.id, previousSlug.value, newSlug, now()))
 	}
 
 	updatePixKey(newPixKey: string): void {
-		if (newPixKey === this.props.pixKey) return
+		if (newPixKey === this.pixKey) return
 		this.props.pixKey = newPixKey
 		this.addEvent(new PayoutChanged(this.id, now()))
 	}
 
 	canReceiveDonations(): boolean {
-		return this.props.pixKey !== undefined && this.props.pixKey.length > 0
+		return this.pixKey !== undefined && this.pixKey.length > 0
 	}
 
 	static __create(input: CreateInput & { id: UniqueId }): Streamer {

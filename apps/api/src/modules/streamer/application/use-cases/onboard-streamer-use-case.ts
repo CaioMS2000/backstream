@@ -64,9 +64,9 @@ export class OnboardStreamerUseCase {
 			return failure(AlreadyOnboardedError)
 		}
 
-		const existingBySlug = await this.props.streamerRepository.findBySlug(
-			input.slug
-		)
+		const slug = Slug.createFromText(input.slug)
+
+		const existingBySlug = await this.props.streamerRepository.findBySlug(slug)
 
 		if (existingBySlug) {
 			return failure(SlugAlreadyTakenError)
@@ -75,7 +75,7 @@ export class OnboardStreamerUseCase {
 		const streamer = await Streamer.create({
 			userId: input.userId,
 			displayName: input.displayName,
-			slug: Slug.createFromText(input.slug),
+			slug,
 			pixKey: input.pixKey,
 		})
 
