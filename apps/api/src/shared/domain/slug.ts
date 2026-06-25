@@ -1,8 +1,12 @@
 export class Slug {
-	public value: string
+	private readonly _value: string
 
 	private constructor(value: string) {
-		this.value = value
+		this._value = value
+	}
+
+	get value(): string {
+		return this._value
 	}
 
 	static create(value: string) {
@@ -28,5 +32,9 @@ export class Slug {
 			.replace(/-$/g, '')
 
 		return new Slug(slugText)
+	}
+
+	equals(other: Slug): boolean {
+		return this.value === other.value
 	}
 }

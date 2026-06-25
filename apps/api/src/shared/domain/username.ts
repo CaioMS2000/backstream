@@ -2,12 +2,20 @@ import { failure, Result, success } from '@backstream/core'
 import { InvalidValueError } from '@/@errors/invalid-value-error'
 
 export class Username {
-	public value: string
+	private readonly _value: string
 	static MIN_LENGTH = 3
 	static MAX_LENGTH = 100
 
 	private constructor(value: string) {
-		this.value = value
+		this._value = value
+	}
+
+	get value(): string {
+		return this._value
+	}
+
+	equals(other: Username): boolean {
+		return this.value === other.value
 	}
 
 	static create(value: string): Result<InvalidValueError, Username> {

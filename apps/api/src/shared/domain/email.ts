@@ -4,7 +4,11 @@ import { EmailContainsAtRule } from './rules/email-contains-at-rule'
 import { EmailFormatRule } from './rules/email-format-rule'
 
 export class Email {
-	private constructor(public readonly value: string) {}
+	private constructor(private readonly _value: string) {}
+
+	get value(): string {
+		return this._value
+	}
 
 	static normalize(raw: string): string {
 		return raw.trim().toLowerCase()

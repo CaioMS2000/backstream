@@ -3,7 +3,11 @@ import { InvalidValueError } from '@/@errors/invalid-value-error'
 import { CPFLengthRule } from './rules/cpf-length-rule'
 
 export class CPF {
-	private constructor(public readonly value: string) {}
+	private constructor(private readonly _value: string) {}
+
+	get value(): string {
+		return this._value
+	}
 
 	static create(cpf: string): Result<InvalidValueError, CPF> {
 		const cpfLengthRule = new CPFLengthRule()

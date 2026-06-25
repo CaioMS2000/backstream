@@ -100,4 +100,18 @@ describe('Username', () => {
 			expect(Username.createFromText('user_123').value).toBe('user_123')
 		})
 	})
+
+	describe('equals', () => {
+		it('should be equal when the values match', () => {
+			expect(
+				Username.__create('joao_silva').equals(Username.__create('joao_silva'))
+			).toBe(true)
+		})
+
+		it('should not be equal when the values differ', () => {
+			expect(
+				Username.__create('joao_silva').equals(Username.__create('maria_silva'))
+			).toBe(false)
+		})
+	})
 })

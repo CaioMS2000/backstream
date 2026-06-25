@@ -4,7 +4,11 @@ import { PhoneLengthRule } from './rules/phone-length-rule'
 
 //556293765723 -> 12 digitos(e 13 tambem porque em alguns estados os telefone ganharam um '9' a mais no começo)
 export class Phone {
-	protected constructor(public value: string) {}
+	protected constructor(private readonly _value: string) {}
+
+	get value(): string {
+		return this._value
+	}
 
 	static create(phone: string): Result<InvalidValueError, Phone> {
 		const phoneLengthRule = new PhoneLengthRule()
