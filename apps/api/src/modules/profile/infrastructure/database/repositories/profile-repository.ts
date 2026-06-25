@@ -13,25 +13,17 @@ export class DrizzleProfileRepository extends ProfileRepository {
 	}
 
 	async insert(profile: Profile): Promise<void> {
-		const record = ProfileMapper.toPersistence(profile)
+		const record = ProfileMapper.toInsertColumns(profile)
 
 		await this.dbContext.current().insert(profileSchema).values(record)
 	}
 
 	async update(profile: Profile): Promise<void> {
-		const record = ProfileMapper.toPersistence(profile)
-
 		const updated = await this.dbContext
 			.current()
 			.update(profileSchema)
-			.set({
-				name: record.name,
-				username: record.username,
-				phone: record.phone,
-				avatarUrl: record.avatarUrl,
-				updatedAt: record.updatedAt,
-			})
-			.where(eq(profileSchema.id, record.id))
+			.set(ProfileMapper.toUpdateColumns(profile))
+			.where(eq(profileSchema.id, profile.id))
 			.returning()
 
 		if (updated.length === 0) {

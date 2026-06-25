@@ -2,11 +2,10 @@ import { UniqueId } from '@backstream/core/unique-id'
 import { OAuthStateRecord } from '@/modules/auth/application/oauth-state-record'
 import { OauthStateDrizzleModel } from '../schemas'
 
-type ToPersistenceParams = OAuthStateRecord & {
+type InsertInput = OAuthStateRecord & {
 	id: UniqueId
 	state: string
 	expiresInSeconds: number
-	createdAt: Date
 }
 
 export class OauthStateMapper {
@@ -18,7 +17,7 @@ export class OauthStateMapper {
 		}
 	}
 
-	static toPersistence(data: ToPersistenceParams): OauthStateDrizzleModel {
+	static toInsertColumns(data: InsertInput) {
 		return {
 			id: data.id,
 			codeVerifier: data.codeVerifier,
@@ -26,7 +25,6 @@ export class OauthStateMapper {
 			state: data.state,
 			roles: [data.role],
 			expiresInSeconds: data.expiresInSeconds,
-			createdAt: data.createdAt,
 		}
 	}
 }

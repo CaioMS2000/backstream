@@ -17,18 +17,13 @@ export class DrizzleUserRepository extends UserRepository {
 	}
 
 	async insert(userData: User): Promise<void> {
-		const newRecord = UserMapper.toPersistence(userData)
-		await this.drizzle.insert(user).values(newRecord)
+		await this.drizzle.insert(user).values(UserMapper.toInsertColumns(userData))
 	}
 
 	async update(userData: User): Promise<void> {
 		const updated = await this.drizzle
 			.update(user)
-			.set({
-				email: userData.email.value,
-				roles: userData.roles,
-				revokedAt: userData.revokedAt,
-			})
+			.set(UserMapper.toUpdateColumns(userData))
 			.where(eq(user.id, userData.id))
 			.returning()
 

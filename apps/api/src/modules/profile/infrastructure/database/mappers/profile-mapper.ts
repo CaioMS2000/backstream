@@ -3,8 +3,6 @@ import { Profile } from '@/modules/profile/domain/profile'
 import { Phone, Username } from '@/shared/domain'
 import { ProfileDrizzleModel } from '../schemas'
 
-type ToPersistenceParams = Profile
-
 export class ProfileMapper {
 	static toDomain(record: ProfileDrizzleModel): Profile {
 		const phone = record.phone ? Phone.__create(record.phone) : null
@@ -21,16 +19,26 @@ export class ProfileMapper {
 		})
 	}
 
-	static toPersistence(data: ToPersistenceParams): ProfileDrizzleModel {
+	static toInsertColumns(user: Profile): ProfileDrizzleModel {
 		return {
-			id: data.id,
-			name: data.name,
-			username: data.username.value,
-			phone: data.phone?.value ?? null,
-			avatarUrl: data.avatarUrl,
-			userId: data.userId,
-			createdAt: data.createdAt,
-			updatedAt: data.updatedAt,
+			id: user.id,
+			name: user.name,
+			username: user.username.value,
+			phone: user.phone?.value ?? null,
+			avatarUrl: user.avatarUrl,
+			userId: user.userId,
+			createdAt: user.createdAt,
+			updatedAt: user.updatedAt,
+		}
+	}
+
+	static toUpdateColumns(user: Profile) {
+		return {
+			name: user.name,
+			username: user.username.value,
+			phone: user.phone?.value ?? null,
+			avatarUrl: user.avatarUrl,
+			updatedAt: user.updatedAt,
 		}
 	}
 }

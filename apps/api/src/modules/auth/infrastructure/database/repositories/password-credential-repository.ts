@@ -11,13 +11,10 @@ export class DrizzlePasswordCredentialRepository extends PasswordCredentialRepos
 	}
 
 	async insert(credential: PasswordCredential): Promise<void> {
-		await this.dbContext.current().insert(passwordCredential).values({
-			id: credential.id,
-			userId: credential.userId,
-			passwordHash: credential.hash,
-			revokedAt: credential.revokedAt,
-			createdAt: credential.createdAt,
-		})
+		await this.dbContext
+			.current()
+			.insert(passwordCredential)
+			.values(PasswordCredentialMapper.toInsertColumns(credential))
 	}
 
 	async findByUserId(userId: UniqueId): Promise<PasswordCredential | null> {

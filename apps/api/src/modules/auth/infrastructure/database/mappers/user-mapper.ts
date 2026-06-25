@@ -4,8 +4,6 @@ import { User } from '@/modules/auth/domain/user'
 import { Email } from '@/shared/domain'
 import { UserDrizzleModel } from '../schemas'
 
-type ToPersistenceParams = User
-
 export class UserMapper {
 	static toDomain(record: UserDrizzleModel): User {
 		const emailResult = Email.create(record.email)
@@ -23,13 +21,21 @@ export class UserMapper {
 		})
 	}
 
-	static toPersistence(data: ToPersistenceParams): UserDrizzleModel {
+	static toInsertColumns(user: User): UserDrizzleModel {
 		return {
-			id: data.id,
-			email: data.email.value,
-			roles: data.roles,
-			revokedAt: data.revokedAt,
-			createdAt: data.createdAt,
+			id: user.id,
+			email: user.email.value,
+			roles: user.roles,
+			revokedAt: user.revokedAt,
+			createdAt: user.createdAt,
+		}
+	}
+
+	static toUpdateColumns(user: User) {
+		return {
+			email: user.email.value,
+			roles: user.roles,
+			revokedAt: user.revokedAt,
 		}
 	}
 }

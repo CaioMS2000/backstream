@@ -13,7 +13,7 @@ export class PasswordCredentialMapper {
 		})
 	}
 
-	static toPersistence(credential: PasswordCredential) {
+	static toInsertColumns(credential: PasswordCredential) {
 		return {
 			id: credential.id,
 			userId: credential.userId,

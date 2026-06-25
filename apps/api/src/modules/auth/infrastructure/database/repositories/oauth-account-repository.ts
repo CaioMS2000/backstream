@@ -36,13 +36,16 @@ export class DrizzleOAuthAccountRepository extends OAuthAccountRepository {
 		const [record] = await this.dbContext
 			.current()
 			.insert(oauthAccount)
-			.values({
-				userId: data.userId,
-				provider: data.provider,
-				providerAccountId: data.providerAccountId,
-				id: await generateId(),
-			})
+			.values(
+				OauthAccountMapper.toInsertColumns({
+					userId: data.userId,
+					provider: data.provider,
+					providerAccountId: data.providerAccountId,
+					id: await generateId(),
+				})
+			)
 			.returning()
+
 		return { id: record.id }
 	}
 }

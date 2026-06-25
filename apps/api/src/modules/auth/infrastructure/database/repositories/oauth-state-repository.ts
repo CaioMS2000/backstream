@@ -19,19 +19,20 @@ export class DrizzleOAuthStateRepository extends OAuthStateRepository {
 		await this.dbContext
 			.current()
 			.insert(oauthState)
-			.values({
-				id: await generateId(),
-				codeVerifier: data.codeVerifier,
-				provider: data.provider,
-				state,
-				roles: [data.role],
-				expiresInSeconds: expiresInSeconds,
-			})
+			.values(
+				OauthStateMapper.toInsertColumns({
+					id: await generateId(),
+					codeVerifier: data.codeVerifier,
+					provider: data.provider,
+					state,
+					role: data.role,
+					expiresInSeconds: expiresInSeconds,
+				})
+			)
 	}
 
 	async findAndDelete(state: string): Promise<OAuthStateRecord | null> {
 		const db = this.dbContext.current()
-
 		const record = await db.query.oauthState.findFirst({
 			where: (table, { eq }) => eq(table.state, state),
 		})
