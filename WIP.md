@@ -1,48 +1,48 @@
-# WIP — Convenções de persistência/domínio + piloto no Streamer
+# CAI-62 (D1) — Injetar id no domínio + tirar timestamps de auditoria · status
 
-> Anotado em 2026-06-16. Trabalho em progresso, commitado só pra pausar. **Não é código final.**
+> Decisão: `id: UniqueId` sempre injetado de fora; domínio não importa infra
+> (`id-generator`/`clock`). Timestamp só fica no domínio se uma regra de negócio
+> usa (ex.: `RefreshToken.expiresAt`/`revokedAt`); auditoria (`createdAt`,
+> `updatedAt`) sai do domínio → banco preenche.
 
-## TL;DR (pra retomar rápido)
+## Já feito
 
-Saiu uma análise cross-cutting + reflexão arquitetural que viraram **6 decisões** sobre repositórios e datas. Já estão registradas como issues no Linear (projeto Backstream). O **módulo streamer** é o piloto pra aplicar tudo, porque é o único sem repositório Drizzle ainda.
+- **RefreshToken** — `id` injetado, `createdAt` fora do domínio. ✅ (PR D1+D2+Opção A)
+- **Profile** — `id`/`now` já injetados (padrão de referência). ✅ *(mas ainda carrega `createdAt`/`updatedAt` no domínio — ver abaixo)*
 
-## Decisões tomadas (viram ADRs + código)
+## Falta
 
-| # | Issue | Decisão |
-|---|---|---|
-| R1 | CAI-61 | Repositórios com **`insert(entity)` / `update(entity)` explícitos**. Sem `save` genérico nem upsert como padrão (upsert só pontual e nomeado, tipo `upsertFromExternalSync`). |
-| D1 | CAI-62 | `id: UniqueId` **sempre injetado** de fora; domínio não importa infra (`id-generator`/`clock`). Timestamp só fica no domínio se **regra de negócio usa** (ex.: `RefreshToken.expiresAt`/`revokedAt`), e aí injetado. Timestamp **só de auditoria** (`createdAt`, `updatedAt`) **sai do domínio** → banco gera via `DEFAULT NOW()`. |
-| D2 | CAI-63 | `refresh-token-repository.ts:33,44,54` para de usar `new Date()`; timestamp vem do use case ou do banco. (bloqueada por R1+D1) |
-| D3 | CAI-64 | Todas as colunas de data → **`timestamptz`**, `mode: 'date'` no drizzle, **UTC fixo** na sessão/role. Motivo: `timestamp` puro é wall-clock ingênuo (bug "ok em dev, quebra em prod"); `timestamptz` grava instante UTC inequívoco. 7 tabelas. |
-| R2 | CAI-65 | `Slug` e `Username` ganham **`equals()`** (como `Phone`); repos recebem VO e comparam com `.equals()`. |
-| R3 | CAI-66 | Toda escrita passa pelo **mapper (`toPersistence`)**; hoje vários repos inlinam o insert. `streamer-mapper` só tem `toDomain`. (bloqueada por R1) |
+### 1. Injetar `id` (remover `generateId()` interno) + remover `createdAt` do domínio
+- **User** (`user.ts:50` — `await generateId()` interno; tem `createdAt`). Callers de `User.create` passam o `id`.
+- **PasswordCredential** (`password-credential.ts:19` — mesma coisa).
 
-Ordem de dependência: **R1 + D1** primeiro (destravam D2 e R3). **D3 e R2** são independentes e podem ir em paralelo.
+### 2. Streamer — o pior caso (injetar `id` E `now`)
+- `streamer.ts:44-45` (`create` usa `generateId()` + `now()`), `:66` (`changeSlug` usa `now()`), `:72` (`updatePixKey` usa `now()`).
+- Remover imports de infra; callers (`onboard-streamer`, `change-streamer-slug`, `update-streamer-pix-key`) passam `id`/`now`. (O `createdAt` já saiu daqui.)
 
-## Estado atual do código (o que está neste commit)
+### 3. Profile — remover `createdAt`/`updatedAt` do domínio
+- `id`/`now` já injetados, mas o agregado ainda carrega `createdAt`/`updatedAt` (auditoria). Remover do domínio + mapper; `updateDetails` para de setar `updatedAt`.
 
-Tudo no módulo **streamer**, ainda incompleto:
+### 4. `updatedAt` gerenciado pelo banco
+- **Nenhum** schema tem `.$onUpdate`/trigger. As colunas `updated_at` de **profile** e **streamer** ficariam `null` pra sempre.
+- Adicionar `.$onUpdate(() => new Date())` (ou trigger) nas duas.
 
-- `apps/api/src/modules/streamer/domain/streamer.ts` (modificado)
-  - ✅ Já **removeu `createdAt` do domínio** (alinhado com D1).
-  - ❌ Ainda chama `generateId()` e `now()` **internos** em `create`/`changeSlug`/`updatePixKey` — falta injetar (D1).
-  - Adicionou `__create` (reconstituição).
-- `apps/api/src/modules/streamer/infrastructure/` (novo, não rastreado)
-  - `database/schemas/streamer.ts` → ❌ usa `timestamp` puro, precisa virar `timestamptz` (D3).
-  - `database/mappers/streamer-mapper.ts` → ❌ só tem `toDomain`, falta `toPersistence` (R3).
-  - `http/routes/index.ts`.
-  - ❌ **Não existe repositório Drizzle do streamer ainda** — é onde aplicar R1 (`insert`/`update`).
+### 5. ADR do D1
+- Não existe ainda (temos 0001–0005, nenhum cobre D1). Candidato natural, no padrão dos outros.
 
-⚠️ **Cuidado ao retomar:** o schema e o mapper acima estão no estado ANTIGO — não tratar como referência boa.
+## Resumo
 
-## Próximo passo (o que estávamos começando)
+| Item | Status |
+|---|---|
+| RefreshToken (id + createdAt) | ✅ |
+| Profile — id/now injetados | ✅ |
+| User — id + createdAt | ❌ |
+| PasswordCredential — id + createdAt | ❌ |
+| Streamer — id + now + infra imports | ❌ |
+| Profile — remover createdAt/updatedAt | ❌ |
+| `updatedAt` DB-managed (profile + streamer) | ❌ |
+| ADR do D1 | ❌ |
 
-Fazer o **streamer como piloto** das convenções, nascendo já certo:
+## Próximo passo sugerido
 
-1. **D3** — schema do streamer → `timestamptz` (`{ withTimezone: true }`), `mode: 'date'`.
-2. **R1** — criar `DrizzleStreamerRepository` com `insert`/`update` explícitos (implementar a abstract `StreamerRepository`).
-3. **R3** — `streamer-mapper` ganha `toPersistence`; repo usa o mapper (não inlina).
-4. **D1** — `Streamer.create`/`changeSlug`/`updatePixKey` recebem `id`/`now` de fora; remover imports de infra.
-5. **R2** — `Slug`/`Username` com `equals()` (usado pelo `findBySlug`).
-
-Depois do piloto validado, propagar pros módulos auth/profile e escrever os ADRs (R1, D1, R2 são candidatos, no padrão do 0002).
+**User + PasswordCredential juntos** (mesmo padrão, só o `id`, rápido), deixando Streamer (3 métodos com `now()`) e o `updatedAt`/ADR pra depois.
