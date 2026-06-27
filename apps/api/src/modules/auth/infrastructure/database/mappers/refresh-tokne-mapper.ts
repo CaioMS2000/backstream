@@ -10,18 +10,17 @@ export class RefreshTokenMapper {
 			value: record.value,
 			expiresAt: record.expiresAt,
 			revokedAt: record.revokedAt,
-			createdAt: record.createdAt,
+			usedAt: record.usedAt,
 		})
 	}
 
-	static toPersistence(data: RefreshToken) {
+	static toInsertColumns(token: RefreshToken) {
 		return {
-			id: data.id,
-			userId: data.userId,
-			value: data.value,
-			expiresAt: data.expiresAt,
-			revokedAt: data.revokedAt,
-			createdAt: data.createdAt,
+			id: token.id,
+			userId: token.userId,
+			value: token.value,
+			expiresAt: token.expiresAt,
+			revokedAt: token.revokedAt,
 		}
 	}
 }

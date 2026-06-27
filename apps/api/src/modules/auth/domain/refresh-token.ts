@@ -1,5 +1,4 @@
 import { UniqueId } from '@backstream/core/unique-id'
-import { generateId } from '@/shared/infrastructure/id-generator'
 
 export class RefreshToken {
 	private constructor(
@@ -7,27 +6,32 @@ export class RefreshToken {
 		readonly userId: UniqueId,
 		readonly value: string, // UUID ou random bytes
 		readonly expiresAt: Date,
-		private _revokedAt: Date | null,
-		readonly createdAt: Date
+		private readonly _revokedAt: Date | null,
+		private readonly _usedAt: Date | null
 	) {}
 
-	get revokedAt() {
+	get revokedAt(): Date | null {
 		return this._revokedAt
 	}
 
-	static async issue(
-		userId: UniqueId,
-		value: string,
-		now: Date,
+	get usedAt(): Date | null {
+		return this._usedAt
+	}
+
+	static issue(input: {
+		id: UniqueId
+		userId: UniqueId
+		value: string
+		now: Date
 		lifetimeMs: number
-	): Promise<RefreshToken> {
+	}): RefreshToken {
 		return new RefreshToken(
-			await generateId(),
-			userId,
-			value,
-			new Date(now.getTime() + lifetimeMs),
+			input.id,
+			input.userId,
+			input.value,
+			new Date(input.now.getTime() + input.lifetimeMs),
 			null,
-			now
+			null
 		)
 	}
 
@@ -37,18 +41,21 @@ export class RefreshToken {
 		value: string
 		expiresAt: Date
 		revokedAt: Date | null
-		createdAt: Date
+		usedAt: Date | null
 	}): RefreshToken {
-		const { id, userId, value, expiresAt, revokedAt, createdAt } = props
-		return new RefreshToken(id, userId, value, expiresAt, revokedAt, createdAt)
+		return new RefreshToken(
+			props.id,
+			props.userId,
+			props.value,
+			props.expiresAt,
+			props.revokedAt,
+			props.usedAt
+		)
 	}
 
 	isValid(now: Date): boolean {
-		return this._revokedAt === null && this.expiresAt > now
-	}
-
-	revoke(now: Date): void {
-		if (this._revokedAt !== null) return
-		this._revokedAt = now
+		return (
+			this._revokedAt === null && this._usedAt === null && this.expiresAt > now
+		)
 	}
 }

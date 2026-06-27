@@ -1,4 +1,5 @@
 import { Result, success } from '@backstream/core/result'
+import { now } from '@/shared/infrastructure/clock'
 import type { JwtTokenGenerator } from '../jwt'
 import type { RefreshTokenRepository } from '../repositories/refresh-token-repository'
 
@@ -20,7 +21,7 @@ export class LogoutUseCase {
 		const tokenHash = await this.props.tokenGenerator.hashRefreshToken(
 			input.refreshToken
 		)
-		await this.props.refreshTokenRepository.revoke(tokenHash)
+		await this.props.refreshTokenRepository.revoke(tokenHash, now())
 		return success(undefined)
 	}
 }

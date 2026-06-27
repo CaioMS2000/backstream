@@ -1,5 +1,6 @@
 import { UniqueId } from '@backstream/core'
 import { now } from '@/shared/infrastructure/clock'
+import { generateId } from '@/shared/infrastructure/id-generator'
 import { RefreshToken } from '../../domain/refresh-token'
 import { AuthenticatedUser } from '../../public/types/authenticated-user'
 import { REFRESH_TOKEN_EXPIRY_SECONDS } from '../constants'
@@ -31,12 +32,13 @@ export class TokenIssuer {
 			await this.props.tokenGenerator.generateRefreshToken()
 		const refreshTokenHash =
 			await this.props.tokenGenerator.hashRefreshToken(refreshTokenValue)
-		const refreshToken = await RefreshToken.issue(
-			UniqueId(user.userId),
-			refreshTokenHash,
-			now(),
-			REFRESH_TOKEN_EXPIRY_SECONDS
-		)
+		const refreshToken = RefreshToken.issue({
+			id: await generateId(),
+			userId: UniqueId(user.userId),
+			value: refreshTokenHash,
+			now: now(),
+			lifetimeMs: REFRESH_TOKEN_EXPIRY_SECONDS * 1000,
+		})
 
 		await this.props.refreshTokenRepository.insert(refreshToken)
 

@@ -1,4 +1,5 @@
 import { failure, Result, success } from '@backstream/core/result'
+import { now } from '@/shared/infrastructure/clock'
 import { InvalidRefreshTokenError } from '../@errors/invalid-refresh-token-error'
 import { TokenReplayDetectedError } from '../@errors/token-replay-detected-error'
 import type { JwtTokenGenerator } from '../jwt'
@@ -31,6 +32,8 @@ export class RefreshTokenUseCase {
 	async execute(
 		input: RefreshTokenUseCaseRequest
 	): Promise<RefreshTokenUseCaseResponse> {
+		const rightNow = now()
+
 		const tokenHash = await this.props.tokenGenerator.hashRefreshToken(
 			input.refreshToken
 		)
@@ -42,17 +45,38 @@ export class RefreshTokenUseCase {
 			return failure(InvalidRefreshTokenError)
 		}
 
-		const marked = await this.props.refreshTokenRepository.markUsed(tokenHash)
+		// Token já resgatado antes → replay de um token rotacionado/roubado.
+		if (stored.usedAt !== null) {
+			await this.props.refreshTokenRepository.revokeAllForUser(
+				stored.userId,
+				rightNow
+			)
+			return failure(TokenReplayDetectedError)
+		}
+
+		// Não usado, mas pode estar revogado (logout) ou expirado → só rejeita.
+		if (!stored.isValid(rightNow)) {
+			return failure(InvalidRefreshTokenError)
+		}
+
+		// Reivindica o uso atomicamente; perder a corrida = replay concorrente.
+		const marked = await this.props.refreshTokenRepository.markUsed(
+			tokenHash,
+			rightNow
+		)
 
 		if (!marked) {
-			await this.props.refreshTokenRepository.revokeAllForUser(stored.userId)
+			await this.props.refreshTokenRepository.revokeAllForUser(
+				stored.userId,
+				rightNow
+			)
 			return failure(TokenReplayDetectedError)
 		}
 
 		const user = await this.props.userRepository.findById(stored.userId)
 
 		if (!user || user.isRevoked()) {
-			await this.props.refreshTokenRepository.revoke(tokenHash)
+			await this.props.refreshTokenRepository.revoke(tokenHash, rightNow)
 			return failure(InvalidRefreshTokenError)
 		}
 
@@ -62,7 +86,7 @@ export class RefreshTokenUseCase {
 			roles: user.roles,
 		})
 
-		await this.props.refreshTokenRepository.revoke(tokenHash)
+		await this.props.refreshTokenRepository.revoke(tokenHash, rightNow)
 
 		return success({
 			accessToken,

@@ -12,8 +12,10 @@ export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
 	}
 
 	async insert(token: RefreshToken): Promise<void> {
-		const newRecord = RefreshTokenMapper.toPersistence(token)
-		await this.dbContext.current().insert(refreshToken).values(newRecord)
+		await this.dbContext
+			.current()
+			.insert(refreshToken)
+			.values(RefreshTokenMapper.toInsertColumns(token))
 	}
 
 	async findByTokenHash(tokenHash: string): Promise<RefreshToken | null> {
@@ -26,32 +28,31 @@ export class DrizzleRefreshTokenRepository extends RefreshTokenRepository {
 		return RefreshTokenMapper.toDomain(record)
 	}
 
-	async revoke(tokenHash: string): Promise<void> {
-		const _result = await this.dbContext
-			.current()
-			.update(refreshToken)
-			.set({ revokedAt: new Date() })
-			.where(
-				and(eq(refreshToken.value, tokenHash), isNull(refreshToken.revokedAt))
-			)
-		// _return (result.rowCount ?? 0) > 0 // indicates if a token was actually revoked
-	}
-
-	async revokeAllForUser(userId: UniqueId): Promise<void> {
+	async revoke(tokenHash: string, now: Date): Promise<void> {
 		await this.dbContext
 			.current()
 			.update(refreshToken)
-			.set({ revokedAt: new Date() })
+			.set({ revokedAt: now })
+			.where(
+				and(eq(refreshToken.value, tokenHash), isNull(refreshToken.revokedAt))
+			)
+	}
+
+	async revokeAllForUser(userId: UniqueId, now: Date): Promise<void> {
+		await this.dbContext
+			.current()
+			.update(refreshToken)
+			.set({ revokedAt: now })
 			.where(
 				and(eq(refreshToken.userId, userId), isNull(refreshToken.revokedAt))
 			)
 	}
 
-	async markUsed(tokenHash: string): Promise<boolean> {
+	async markUsed(tokenHash: string, now: Date): Promise<boolean> {
 		const result = await this.dbContext
 			.current()
 			.update(refreshToken)
-			.set({ usedAt: new Date() })
+			.set({ usedAt: now })
 			.where(
 				and(eq(refreshToken.value, tokenHash), isNull(refreshToken.usedAt))
 			)
