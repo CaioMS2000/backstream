@@ -1,6 +1,6 @@
 # Arquitetura de módulos
 
-Notas de design dos bounded contexts do Backstream. Revisitar antes de criar novos módulos. Ancorado no [escopo do MVP](escopo-mvp.md).
+Notas de design dos bounded contexts do Backstream. Revisitar antes de criar novos módulos. Ancorado no [escopo do MVP](escopo-mvp.md). Para a visão de fora (quem usa o sistema e com quais sistemas externos ele troca dado), ver [C4 Context](apps/api/docs/c4-context.md).
 
 ## Princípio geral
 
