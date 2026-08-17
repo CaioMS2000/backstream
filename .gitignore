@@ -47,3 +47,15 @@ yarn-error.log*
 temp
 logs/
 @locals
+.git.corrupted-backup
+*.py
+*.sh
+*.txt
+*.md
+!arquitetura-modulos.md
+!escopo-mvp.md
+!tasks.md
+!WIP.md
+!README.md
+!notes/*.md
+!apps/api/docs/**/*.md
