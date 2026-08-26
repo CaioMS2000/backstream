@@ -25,6 +25,7 @@ import {
 } from '@/shared/infrastructure/clock'
 import {
 	__resetIdGeneratorForTests,
+	generateId,
 	initializeIdGenerator,
 } from '@/shared/infrastructure/id-generator'
 import { resetDb } from '@/test/reset-db'
@@ -66,6 +67,7 @@ describe('DrizzleTransactionService (integration)', () => {
 		if (emailResult.isFailure()) throw new Error('invalid test email')
 
 		return User.create({
+			id: await generateId(),
 			email: emailResult.value,
 			roles: ['donor'],
 			now: now(),
@@ -110,10 +112,10 @@ describe('DrizzleTransactionService (integration)', () => {
 	it('atomicidade entre dois repositórios — falha no segundo desfaz o primeiro', async () => {
 		const user = await makeUser()
 		const passwordHash = 'irrelevant'
-		const credential = await PasswordCredential.create({
+		const credential = PasswordCredential.create({
+			id: await generateId(),
 			userId: user.id,
 			passwordHash,
-			now: now(),
 		})
 
 		await expect(
@@ -132,10 +134,10 @@ describe('DrizzleTransactionService (integration)', () => {
 
 	it('commita ambos os saves quando o callback termina sem lançar', async () => {
 		const user = await makeUser()
-		const credential = await PasswordCredential.create({
+		const credential = PasswordCredential.create({
+			id: await generateId(),
 			userId: user.id,
 			passwordHash: 'irrelevant',
-			now: now(),
 		})
 
 		await txService.run(async () => {

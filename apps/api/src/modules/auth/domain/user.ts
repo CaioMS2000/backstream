@@ -1,17 +1,22 @@
 import { AggregateRoot } from '@backstream/core/aggregate-root'
 import { UniqueId } from '@backstream/core/unique-id'
 import { Email } from '@/shared/domain/email'
-import { generateId } from '@/shared/infrastructure/id-generator'
 import { UserCreated } from './events/user-created'
 import { Role } from './role'
+
+type CreateParams = {
+	id: UniqueId
+	email: Email
+	roles: Role[]
+	now: Date
+}
 
 export class User extends AggregateRoot {
 	private constructor(
 		id: UniqueId,
 		private _email: Email,
 		private _roles: Role[],
-		private _revokedAt: Date | null,
-		readonly createdAt: Date
+		private _revokedAt: Date | null
 	) {
 		super(id)
 	}
@@ -41,18 +46,8 @@ export class User extends AggregateRoot {
 		this._roles = this._roles.filter(r => r !== role)
 	}
 
-	static async create(input: {
-		email: Email
-		roles: Role[]
-		now: Date
-	}): Promise<User> {
-		const user = new User(
-			await generateId(),
-			input.email,
-			input.roles,
-			null,
-			input.now
-		)
+	static create(input: CreateParams): User {
+		const user = new User(input.id, input.email, input.roles, null)
 		user.addEvent(new UserCreated(user.id, input.email.value, input.now))
 		return user
 	}
@@ -62,15 +57,8 @@ export class User extends AggregateRoot {
 		roles: Role[]
 		id: UniqueId
 		revokedAt: Date | null
-		createdAt: Date
 	}): User {
-		const user = new User(
-			input.id,
-			input.email,
-			input.roles,
-			input.revokedAt,
-			input.createdAt
-		)
+		const user = new User(input.id, input.email, input.roles, input.revokedAt)
 
 		return user
 	}

@@ -9,7 +9,6 @@ export class PasswordCredentialMapper {
 			userId: UniqueId(record.userId),
 			passwordHash: record.passwordHash,
 			revokedAt: record.revokedAt,
-			createdAt: record.createdAt,
 		})
 	}
 
@@ -19,7 +18,6 @@ export class PasswordCredentialMapper {
 			userId: credential.userId,
 			passwordHash: credential.hash,
 			revokedAt: credential.revokedAt,
-			createdAt: credential.createdAt,
 		}
 	}
 }

@@ -16,18 +16,16 @@ export class UserMapper {
 			id: UniqueId(record.id),
 			roles: record.roles,
 			revokedAt: record.revokedAt,
-			createdAt: record.createdAt,
 			email: emailResult.value,
 		})
 	}
 
-	static toInsertColumns(user: User): UserDrizzleModel {
+	static toInsertColumns(user: User) {
 		return {
 			id: user.id,
 			email: user.email.value,
 			roles: user.roles,
 			revokedAt: user.revokedAt,
-			createdAt: user.createdAt,
 		}
 	}
 

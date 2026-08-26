@@ -13,7 +13,6 @@ function makeUser(roles: Role[]): User {
 		email: email.value,
 		roles: [...roles],
 		revokedAt: null,
-		createdAt: new Date(),
 	})
 }
 

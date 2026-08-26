@@ -1,6 +1,7 @@
 import { failure, success } from '@backstream/core'
 import { Email } from '@/shared/domain'
 import { now } from '@/shared/infrastructure/clock'
+import { generateId } from '@/shared/infrastructure/id-generator'
 import { User } from '../../domain/user'
 import {
 	CreateCredentialsFromProviderCommand,
@@ -29,7 +30,8 @@ export class CreateCredentialsFromProviderCommandImpl extends CreateCredentialsF
 			return failure(emailResult.value)
 		}
 
-		const user = await User.create({
+		const user = User.create({
+			id: await generateId(),
 			email: emailResult.value,
 			roles: [input.role],
 			now: now(),

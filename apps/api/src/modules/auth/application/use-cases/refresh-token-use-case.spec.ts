@@ -81,7 +81,6 @@ describe('RefreshTokenUseCase', () => {
 			email: email.value,
 			roles: ['donor'],
 			revokedAt: null,
-			createdAt: new Date(),
 		})
 		userRepo.items.push(user)
 

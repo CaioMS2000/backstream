@@ -1,6 +1,7 @@
 import { failure, success } from '@backstream/core/result'
 import { Email } from '@/shared/domain'
 import { now } from '@/shared/infrastructure/clock'
+import { generateId } from '@/shared/infrastructure/id-generator'
 import { PasswordCredential } from '../../domain/password-credential'
 import { User } from '../../domain/user'
 import {
@@ -48,7 +49,8 @@ export class CreateCredentialsCommandImpl extends CreateCredentialsCommand {
 
 		if (existingEmail) return failure(EmailAlreadyRegisteredError)
 
-		const user = await User.create({
+		const user = User.create({
+			id: await generateId(),
 			email,
 			roles: [input.role],
 			now: now(),
@@ -57,10 +59,10 @@ export class CreateCredentialsCommandImpl extends CreateCredentialsCommand {
 		await this.userRepository.insert(user)
 
 		const passwordHash = await this.hashGenerator.hash(input.password)
-		const passwordCredential = await PasswordCredential.create({
+		const passwordCredential = PasswordCredential.create({
+			id: await generateId(),
 			userId: user.id,
 			passwordHash,
-			now: now(),
 		})
 
 		await this.passwordCredentialRepository.insert(passwordCredential)
