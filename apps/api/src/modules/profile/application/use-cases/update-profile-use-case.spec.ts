@@ -63,8 +63,6 @@ describe('UpdateProfileUseCase', () => {
 			username: Username.__create(`user_${opts.userId}`),
 			phone: phoneResult.value,
 			avatarUrl: null,
-			createdAt: new Date(),
-			updatedAt: null,
 		})
 
 		profileRepo.profiles.push(profile)
@@ -83,13 +81,18 @@ describe('UpdateProfileUseCase', () => {
 	it('deve atualizar nome e telefone de um profile existente', async () => {
 		seedProfile({ userId: baseInput.userId, name: 'Nome Antigo', phone: null })
 
+		const handler = vi.fn(async (_event: ProfileUpdated) => {})
+		domainEvents.register(ProfileUpdated, handler)
+
 		const result = await sut.execute(baseInput)
 
 		expect(result.isSuccess()).toBe(true)
 		if (result.isSuccess()) {
 			expect(result.value.profile.name).toBe(baseInput.name)
 			expect(result.value.profile.phone?.value).toBe(baseInput.phone)
-			expect(result.value.profile.updatedAt).not.toBeNull()
+			expect(handler).toHaveBeenCalledTimes(1)
+			const event = handler.mock.calls[0]?.[0] as ProfileUpdated
+			expect(event.occurredAt).toBeInstanceOf(Date)
 		}
 	})
 

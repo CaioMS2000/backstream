@@ -7,7 +7,10 @@ export const profile = pgTable('profile', {
 	username: text('username').notNull().unique(),
 	phone: text('phone').unique(),
 	avatarUrl: text('avatar_url'),
-	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }),
+	updatedAt: timestamp('updated_at', {
+		withTimezone: true,
+		mode: 'date',
+	}).$onUpdate(() => new Date()),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.notNull()
 		.defaultNow(),

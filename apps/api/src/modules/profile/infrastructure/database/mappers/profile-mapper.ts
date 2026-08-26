@@ -14,12 +14,10 @@ export class ProfileMapper {
 			phone,
 			avatarUrl: record.avatarUrl,
 			userId: UniqueId(record.userId),
-			createdAt: record.createdAt,
-			updatedAt: record.updatedAt,
 		})
 	}
 
-	static toInsertColumns(user: Profile): ProfileDrizzleModel {
+	static toInsertColumns(user: Profile) {
 		return {
 			id: user.id,
 			name: user.name,
@@ -27,8 +25,6 @@ export class ProfileMapper {
 			phone: user.phone?.value ?? null,
 			avatarUrl: user.avatarUrl,
 			userId: user.userId,
-			createdAt: user.createdAt,
-			updatedAt: user.updatedAt,
 		}
 	}
 
@@ -38,7 +34,6 @@ export class ProfileMapper {
 			username: user.username.value,
 			phone: user.phone?.value ?? null,
 			avatarUrl: user.avatarUrl,
-			updatedAt: user.updatedAt,
 		}
 	}
 }

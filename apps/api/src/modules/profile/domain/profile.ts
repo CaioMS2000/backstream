@@ -9,11 +9,9 @@ export type ProfileProps = {
 	username: Username
 	phone: Phone | null
 	avatarUrl: string | null
-	createdAt: Date
-	updatedAt: Date | null
 }
 
-type CreateInput = Omit<ProfileProps, 'createdAt' | 'updatedAt'> & {
+type CreateInput = ProfileProps & {
 	id: UniqueId
 	now: Date
 }
@@ -33,8 +31,6 @@ export class Profile extends AggregateRoot {
 			phone: input.phone,
 			avatarUrl: input.avatarUrl,
 			userId: input.userId,
-			createdAt: input.now,
-			updatedAt: null,
 		})
 
 		profile.addEvent(
@@ -53,7 +49,6 @@ export class Profile extends AggregateRoot {
 	updateDetails(input: { name: string; phone: Phone | null; now: Date }): void {
 		this.props.name = input.name
 		this.props.phone = input.phone
-		this.props.updatedAt = input.now
 
 		this.addEvent(
 			new ProfileUpdated(
@@ -88,14 +83,6 @@ export class Profile extends AggregateRoot {
 
 	get userId(): UniqueId {
 		return this.props.userId
-	}
-
-	get createdAt(): Date {
-		return this.props.createdAt
-	}
-
-	get updatedAt(): Date | null {
-		return this.props.updatedAt
 	}
 
 	static __create(input: ProfileProps & { id: UniqueId }): Profile {

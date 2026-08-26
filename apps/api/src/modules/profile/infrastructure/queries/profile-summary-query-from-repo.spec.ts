@@ -32,8 +32,6 @@ describe('ProfileSummaryQueryFromRepo', () => {
 			username: Username.__create(`user_${opts.userId}`),
 			phone: phoneResult.value,
 			avatarUrl: opts.avatarUrl ?? null,
-			createdAt: new Date(),
-			updatedAt: null,
 		})
 
 		profileRepo.profiles.push(profile)
