@@ -14,12 +14,14 @@ import { SlugChanged } from './events/slug-changed'
 import { StreamerCreated } from './events/streamer-created'
 import { Streamer } from './streamer'
 
-async function makeStreamer(pixKey?: string): Promise<Streamer> {
+function makeStreamer(pixKey?: string): Streamer {
 	return Streamer.create({
+		id: UniqueId('streamer-1'),
 		userId: UniqueId('user-1'),
 		displayName: 'Caio',
 		slug: Slug.create('caio'),
 		pixKey,
+		now: new Date(),
 	})
 }
 
@@ -36,7 +38,7 @@ describe('Streamer aggregate', () => {
 
 	describe('create', () => {
 		it('emite StreamerCreated no factory', async () => {
-			const streamer = await makeStreamer()
+			const streamer = makeStreamer()
 			expect(streamer.events).toHaveLength(1)
 			expect(streamer.events[0]).toBeInstanceOf(StreamerCreated)
 		})
@@ -44,7 +46,7 @@ describe('Streamer aggregate', () => {
 
 	describe('rename', () => {
 		it('atualiza displayName e não emite evento adicional', async () => {
-			const streamer = await makeStreamer()
+			const streamer = makeStreamer()
 
 			streamer.rename('Caio Marques')
 
@@ -53,7 +55,7 @@ describe('Streamer aggregate', () => {
 		})
 
 		it('é no-op quando o displayName é igual', async () => {
-			const streamer = await makeStreamer()
+			const streamer = makeStreamer()
 
 			streamer.rename('Caio')
 
@@ -64,9 +66,9 @@ describe('Streamer aggregate', () => {
 
 	describe('changeSlug', () => {
 		it('atualiza slug e emite SlugChanged com valores antigo e novo', async () => {
-			const streamer = await makeStreamer()
+			const streamer = makeStreamer()
 
-			streamer.changeSlug('novo-slug')
+			streamer.changeSlug('novo-slug', new Date())
 
 			expect(streamer.props.slug.value).toBe('novo-slug')
 			expect(streamer.events).toHaveLength(2)
@@ -77,9 +79,9 @@ describe('Streamer aggregate', () => {
 		})
 
 		it('é no-op quando o slug é igual', async () => {
-			const streamer = await makeStreamer()
+			const streamer = makeStreamer()
 
-			streamer.changeSlug('caio')
+			streamer.changeSlug('caio', new Date())
 
 			expect(streamer.events).toHaveLength(1)
 		})
@@ -87,9 +89,9 @@ describe('Streamer aggregate', () => {
 
 	describe('updatePixKey', () => {
 		it('atualiza pixKey e emite PayoutChanged', async () => {
-			const streamer = await makeStreamer()
+			const streamer = makeStreamer()
 
-			streamer.updatePixKey('caio@pix.com')
+			streamer.updatePixKey('caio@pix.com', new Date())
 
 			expect(streamer.props.pixKey).toBe('caio@pix.com')
 			expect(streamer.events).toHaveLength(2)
@@ -97,9 +99,9 @@ describe('Streamer aggregate', () => {
 		})
 
 		it('é no-op quando o pixKey é igual', async () => {
-			const streamer = await makeStreamer('caio@pix.com')
+			const streamer = makeStreamer('caio@pix.com')
 
-			streamer.updatePixKey('caio@pix.com')
+			streamer.updatePixKey('caio@pix.com', new Date())
 
 			expect(streamer.events).toHaveLength(1)
 		})
@@ -107,17 +109,17 @@ describe('Streamer aggregate', () => {
 
 	describe('canReceiveDonations', () => {
 		it('retorna false quando pixKey não foi configurado', async () => {
-			const streamer = await makeStreamer()
+			const streamer = makeStreamer()
 			expect(streamer.canReceiveDonations()).toBe(false)
 		})
 
 		it('retorna false quando pixKey é string vazia', async () => {
-			const streamer = await makeStreamer('')
+			const streamer = makeStreamer('')
 			expect(streamer.canReceiveDonations()).toBe(false)
 		})
 
 		it('retorna true quando pixKey está preenchido', async () => {
-			const streamer = await makeStreamer('caio@pix.com')
+			const streamer = makeStreamer('caio@pix.com')
 			expect(streamer.canReceiveDonations()).toBe(true)
 		})
 	})

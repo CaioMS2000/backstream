@@ -6,7 +6,10 @@ export const streamer = pgTable('streamer', {
 	displayName: text('display_name').notNull(),
 	slug: text('slug').notNull().unique(),
 	pixKey: text('pix_key').unique(),
-	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }),
+	updatedAt: timestamp('updated_at', {
+		withTimezone: true,
+		mode: 'date',
+	}).$onUpdate(() => new Date()),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
 		.notNull()
 		.defaultNow(),

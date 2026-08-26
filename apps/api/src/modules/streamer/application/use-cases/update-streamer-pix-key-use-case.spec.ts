@@ -5,6 +5,7 @@ import { Slug } from '@/shared/domain'
 import {
 	__resetClockForTests,
 	initializeClock,
+	now,
 } from '@/shared/infrastructure/clock'
 import {
 	__resetIdGeneratorForTests,
@@ -30,10 +31,12 @@ describe('UpdateStreamerPixKeyUseCase', () => {
 		streamerRepo = new InMemoryStreamerRepository()
 		domainEvents = new DomainEventDispatcher()
 
-		const streamer = await Streamer.create({
+		const streamer = Streamer.create({
+			id: UniqueId('streamer-1'),
 			userId,
 			displayName: 'Caio',
 			slug: Slug.create('caio'),
+			now: now(),
 		})
 		streamerRepo.items.push(streamer)
 

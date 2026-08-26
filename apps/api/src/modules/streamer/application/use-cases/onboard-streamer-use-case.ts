@@ -4,6 +4,7 @@ import { failure, Result, success } from '@backstream/core/result'
 import type { UniqueId } from '@backstream/core/unique-id'
 import { Slug } from '@/shared/domain'
 import { now } from '@/shared/infrastructure/clock'
+import { generateId } from '@/shared/infrastructure/id-generator'
 import { UserSummaryQuery } from '../../../auth/public/queries/user-summary-query'
 import { Streamer } from '../../domain/streamer'
 import { StreamerOnboarded } from '../../public/events/streamer-onboarded'
@@ -72,11 +73,13 @@ export class OnboardStreamerUseCase {
 			return failure(SlugAlreadyTakenError)
 		}
 
-		const streamer = await Streamer.create({
+		const streamer = Streamer.create({
+			id: await generateId(),
 			userId: input.userId,
 			displayName: input.displayName,
 			slug,
 			pixKey: input.pixKey,
+			now: now(),
 		})
 
 		await this.props.streamerRepository.insert(streamer)

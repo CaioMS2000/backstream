@@ -5,6 +5,7 @@ import { Slug } from '@/shared/domain'
 import {
 	__resetClockForTests,
 	initializeClock,
+	now,
 } from '@/shared/infrastructure/clock'
 import {
 	__resetIdGeneratorForTests,
@@ -30,10 +31,12 @@ describe('ChangeStreamerSlugUseCase', () => {
 		streamerRepo = new InMemoryStreamerRepository()
 		domainEvents = new DomainEventDispatcher()
 
-		const streamer = await Streamer.create({
+		const streamer = Streamer.create({
+			id: UniqueId('streamer-1'),
 			userId,
 			displayName: 'Caio',
 			slug: Slug.create('caio'),
+			now: now(),
 		})
 		streamerRepo.items.push(streamer)
 
@@ -76,10 +79,12 @@ describe('ChangeStreamerSlugUseCase', () => {
 	})
 
 	it('falha com SlugAlreadyTakenError quando outro streamer já usa o slug', async () => {
-		const otherStreamer = await Streamer.create({
+		const otherStreamer = Streamer.create({
+			id: UniqueId('streamer-2'),
 			userId: UniqueId('user-2'),
 			displayName: 'Outro',
 			slug: Slug.create('tomado'),
+			now: now(),
 		})
 		streamerRepo.items.push(otherStreamer)
 
